@@ -1,23 +1,15 @@
 const tabsDiv = document.getElementById("tabs");
 const contentDiv = document.getElementById("content");
 
-// Load JSON from relative path
 fetch("./data/times.json")
-  .then(response => {
-    if (!response.ok) throw new Error("Cannot find times.json");
-    return response.json();
-  })
+  .then(res => res.json())
   .then(data => {
     const sessions = data.sessions;
-    if (!sessions || sessions.length === 0) {
-      contentDiv.innerHTML = "<p>No lap times found.</p>";
-      return;
-    }
 
     // Get unique drivers
     const drivers = [...new Set(sessions.map(s => s.driver))];
 
-    // Create tabs
+    // Create tabs for each driver
     drivers.forEach((driver, i) => {
       const tab = document.createElement("div");
       tab.className = "tab" + (i === 0 ? " active" : "");
@@ -26,16 +18,19 @@ fetch("./data/times.json")
       tabsDiv.appendChild(tab);
     });
 
+    // Add Leaderboard tab
+    const lbTab = document.createElement("div");
+    lbTab.className = "tab";
+    lbTab.textContent = "Track Leaderboard";
+    lbTab.onclick = () => showLeaderboard(lbTab, sessions);
+    tabsDiv.appendChild(lbTab);
+
     // Show first driver by default
-    showDriver(drivers[0], tabsDiv.firstChild);
-  })
-  .catch(err => {
-    contentDiv.innerHTML = `<p style="color:red;">Error loading times.json: ${err}</p>`;
+    showDriver(drive‍rs[0], tabsDiv.firstChild);
   });
 
-// Show lap times for a driver
+// Show driver lap times
 function showDriver(driver, tabElement) {
-  // Highlight tab
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
   tabElement.classList.add("active");
 
@@ -43,7 +38,7 @@ function showDriver(driver, tabElement) {
     .then(res => res.json())
     .then(data => {
       const driverSessions = data.sessions.filter(s => s.driver === driver);
-      if (driverSessions.length === 0) {
+      if (!driverSessions.length) {
         contentDiv.innerHTML = "<p>No lap times for this driver.</p>";
         return;
       }
@@ -62,8 +57,51 @@ function showDriver(driver, tabElement) {
 
       html += "</table>";
       contentDiv.innerHTML = html;
-    })
-    .catch(err => {
-      contentDiv.innerHTML = `<p style="color:red;">Error loading times.json: ${err}</p>`;
     });
 }
+
+// NEW: Show track leaderboard in its own tab
+function showLeaderboard(tabElement, sessions) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  tabElement.classList.add("active");
+
+  // Create track selection dropdown
+  let html = `<label style="color:red;font-weight:bold;">Select Track: </label>`;
+  html += `<select id="trackSelect" style="padding:5px;font-weight:bold;"></select>`;
+  html += `<div id="leaderboardContent" style="margin-top:10px;"></div>`;
+  contentDiv.innerHTML = html;
+
+  const trackSelect = document.getElementById("trackSelect");
+  const lbContent = document.getElementById("leaderboardContent");
+
+  // Populate tracks
+  const tracks = [...new Set(sessions.map(s => s.track))];
+  tracks.forEach(track => {
+    const option = document.createElement("option");
+    option.value = track;
+    option.textContent = track;
+    trackSelect.appendChild(option);
+  });
+
+  // Show leaderboard for selected track
+  trackSelect.onchange = () => renderLeaderboard(trackSelect.value, lbContent, sessions);
+
+  // Show first track by default
+  renderLeaderboard(tracks[0], lbContent, sessions);
+}
+
+// Render leaderboard table for a given track
+function renderLeaderboard(track, container, sessions) {
+  const trackSessions = sessions
+    .filter(s => s.track === track)
+    .sort((a, b) => {
+      const timeToSec = t => {
+        if(t==="N/A") return Infinity;
+        const parts = t.split(":");
+        return parseInt(parts[0])*60 + parseFloat(parts[1]);
+      };
+      return timeToSec(a.best_lap) - timeToSec(b.best_lap);
+    });
+
+  if (!trackSessions.length) {
+    container.innerHTML = "<p>No
