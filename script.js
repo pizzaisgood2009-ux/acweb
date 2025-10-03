@@ -1,11 +1,8 @@
 // ===== Helper Functions =====
-
-// Replace underscores with spaces for nicer display
 function cleanName(name) {
   return name.replace(/_/g, ' ');
 }
 
-// Map track file names to proper display names
 const trackNames = {
   "KS_NURBURGRING-LAYOUT_GP_A": "Nürburgring GP",
   "KS_SILVERSTONE-NATIONAL": "Silverstone National",
@@ -26,11 +23,8 @@ fetch("data/times_flat.json")
   .then(res => res.json())
   .then(data => {
     const sessions = data.sessions;
-
-    // Get unique drivers
     const drivers = [...new Set(sessions.map(s => s.driver))];
 
-    // Create tabs for each driver
     drivers.forEach((driver, i) => {
       const tab = document.createElement("div");
       tab.className = "tab" + (i === 0 ? " active" : "");
@@ -39,14 +33,12 @@ fetch("data/times_flat.json")
       tabsDiv.appendChild(tab);
     });
 
-    // Add Leaderboard tab
     const lbTab = document.createElement("div");
     lbTab.className = "tab";
     lbTab.textContent = "Track Leaderboard";
     lbTab.onclick = () => showLeaderboard(lbTab, sessions);
     tabsDiv.appendChild(lbTab);
 
-    // Show first driver by default
     showDriver(drivers[0], tabsDiv.firstChild);
   });
 
@@ -81,21 +73,19 @@ function showDriver(driver, tabElement) {
     });
 }
 
-// ===== Show Track Leaderboard =====
+// ===== Track Leaderboard =====
 function showLeaderboard(tabElement, sessions) {
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
   tabElement.classList.add("active");
 
-  // Track selection dropdown
-  let html = `<label style="color:#ff3c00;font-weight:bold;">Select Track: </label>`;
-  html += `<select id="trackSelect" style="padding:5px;font-weight:bold;"></select>`;
-  html += `<div id="leaderboardContent" style="margin-top:10px;"></div>`;
+  let html = `<label>Select Track: </label>
+              <select id="trackSelect"></select>
+              <div id="leaderboardContent" style="margin-top:10px;"></div>`;
   contentDiv.innerHTML = html;
 
   const trackSelect = document.getElementById("trackSelect");
   const lbContent = document.getElementById("leaderboardContent");
 
-  // Populate tracks
   const tracks = [...new Set(sessions.map(s => s.track))];
   tracks.forEach(track => {
     const option = document.createElement("option");
@@ -104,14 +94,10 @@ function showLeaderboard(tabElement, sessions) {
     trackSelect.appendChild(option);
   });
 
-  // Show leaderboard for selected track
   trackSelect.onchange = () => renderLeaderboard(trackSelect.value, lbContent, sessions);
-
-  // Show first track by default
   renderLeaderboard(tracks[0], lbContent, sessions);
 }
 
-// ===== Render Leaderboard Table =====
 function renderLeaderboard(track, container, sessions) {
   const trackSessions = sessions
     .filter(s => s.track === track)
