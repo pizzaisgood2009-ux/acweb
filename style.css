@@ -1,51 +1,83 @@
-import json
-import os
-
-# Paths
-DATA_FOLDER = "data"
-INPUT_FILE = os.path.join(DATA_FOLDER, "times.json")
-OUTPUT_FILE = os.path.join(DATA_FOLDER, "times_flat.json")
-
-# Optional: map track file names to proper display names (used only if you want)
-TRACK_NAMES = {
-    "KS_NURBURGRING-LAYOUT_GP_A": "Nürburgring GP",
-    "KS_SILVERSTONE-NATIONAL": "Silverstone National",
-    "AA_IMS-INDY500": "Indianapolis 500",
-    "KS_VALLELUNGA-CLUB_CIRCUIT": "Vallelunga Club Circuit"
+body {
+  font-family: 'Orbitron', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #0d0d0d;
+  color: #e0e0e0;
+  margin: 0;
+  padding: 0;
 }
 
-def clean_name(name):
-    """Replace underscores with spaces."""
-    return name.replace("_", " ")
+.tabs {
+  display: flex;
+  background-color: #1a1a1a;
+  border-bottom: 3px solid #ff4500;
+}
 
-def main():
-    # Read original times.json
-    if not os.path.exists(INPUT_FILE):
-        print(f"{INPUT_FILE} not found.")
-        return
+.tab {
+  padding: 12px 20px;
+  cursor: pointer;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: #f1f1f1;
+  transition: all 0.3s ease;
+  letter-spacing: 1px;
+}
 
-    with open(INPUT_FILE, "r", encoding="utf-8") as f:
-        data = json.load(f)
+.tab:hover {
+  background-color: #333;
+  color: #ff4500;
+}
 
-    sessions = data.get("sessions", [])
+.tab.active {
+  background-color: #ff4500;
+  color: #fff;
+  box-shadow: 0 0 10px #ff4500;
+}
 
-    # Process each session
-    flat_sessions = []
-    for s in sessions:
-        flat_sessions.append({
-            "driver": s.get("driver", "Unknown"),
-            "car": clean_name(s.get("car", "Unknown")),
-            "track": TRACK_NAMES.get(s.get("track", ""), clean_name(s.get("track", "Unknown"))),
-            "date": s.get("date", "Unknown"),
-            "best_lap": s.get("best_lap", "N/A"),
-            "laps": s.get("laps", [])
-        })
+.content {
+  padding: 20px;
+}
 
-    # Save flattened JSON
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        json.dump({"sessions": flat_sessions}, f, indent=2)
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  background-color: #1a1a1a;
+  border-radius: 5px;
+  overflow: hidden;
+}
 
-    print(f"Updated {OUTPUT_FILE} successfully!")
+th, td {
+  padding: 12px 15px;
+  text-align: left;
+}
 
-if __name__ == "__main__":
-    main()
+th {
+  background-color: #111;
+  color: #ff4500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+tr:nth-child(even) {
+  background-color: #1f1f1f;
+}
+
+tr:hover {
+  background-color: #333;
+}
+
+select {
+  padding: 8px 12px;
+  font-weight: bold;
+  background-color: #1a1a1a;
+  color: #f1f1f1;
+  border: 1px solid #ff4500;
+  border-radius: 5px;
+  margin-top: 10px;
+}
+
+label {
+  font-weight: bold;
+  color: #ff4500;
+  margin-right: 10px;
+}
