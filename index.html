@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Assetto Corsa Lap Times</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #111; color: #eee; margin: 0; }
+    .tabs { display: flex; background: #222; }
+    .tab { padding: 10px 20px; cursor: pointer; border-right: 1px solid #444; }
+    .tab.active { background: #444; }
+    .content { padding: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+    th, td { border: 1px solid #444; padding: 8px; text-align: left; }
+    th { background: #333; }
+    tr:nth-child(even) { background: #222; }
+  </style>
+</head>
+<body>
+  <div class="tabs" id="tabs"></div>
+  <div class="content" id="content">Loading...</div>
+
+  <script>
+    async function loadData() {
+      try {
+        const response = await fetch("data/times.json");
+        const data = await response.json();
+
+        // Group sessions by driver
+        const drivers = {};
+        data.sessions.forEach(session => {
+          if (!drivers[session.driver]) drivers[session.driver] = [];
+          drivers[session.driver].push(session);
+        });
+
+        const tabsDiv = document.getElementById("tabs");
+        const contentDiv = document.getElementById("content");
+
+        // Create tabs
+        const driverNames = Object.keys(drivers);
+        driverNames.forEach((driver, index) => {
+          const tab = document.createElement("div");
+          tab.className = "tab" + (index === 0 ? " active" : "");
+          tab.textContent = driver;
+          tab.onclick = () => showDriver(driver);
+          tabsDiv.appendChild(tab);
+        });
+
+        // Show first driver by default
+        function showDriver(driver) {
+          document.querySelectorAll(".tab").forEach(tab => {
+            tab.classList.toggle("active", tab.textContent === driver);
+          });
+
+          const sessions = drivers[driver];
+          let html = `<h2>${driver}'s Lap Times</h2>`;
+          html += "<table><tr><th>Date</th><th>Track</th><th>Car</th><th>Best Lap</th></tr>";
+          sessions.forEach(s => {
+            html += `<tr>
+              <td>${s.date}</td>
+              <td>${s.track}</td>
+              <td>${s.car}</td>
+              <td>${s.best_lap}</td>
+            </tr>`;
+          });
+          html += "</table>";
+          contentDiv.innerHTML = html;
+        }
+
+        showDriver(driverNames[0]); // show first driver
+      } catch (e) {
+        document.getElementById("content").innerText = "Error loading times.json";
+        console.error(e);
+      }
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
