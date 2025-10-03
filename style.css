@@ -26,6 +26,7 @@ header {
   border-right: 1px solid #222;
   white-space: nowrap;
   font-weight: bold;
+  color: #fff;
   transition: background 0.2s;
 }
 
