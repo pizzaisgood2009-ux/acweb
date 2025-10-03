@@ -1,60 +1,51 @@
-/* General page style */
-body {
-  font-family: 'Arial Black', sans-serif; /* Bold, racing style font */
-  background-color: #000;                 /* Black background */
-  color: #ff0000;                          /* Red text */
-  padding: 20px;
-  margin: 0;
+import json
+import os
+
+# Paths
+DATA_FOLDER = "data"
+INPUT_FILE = os.path.join(DATA_FOLDER, "times.json")
+OUTPUT_FILE = os.path.join(DATA_FOLDER, "times_flat.json")
+
+# Optional: map track file names to proper display names (used only if you want)
+TRACK_NAMES = {
+    "KS_NURBURGRING-LAYOUT_GP_A": "Nürburgring GP",
+    "KS_SILVERSTONE-NATIONAL": "Silverstone National",
+    "AA_IMS-INDY500": "Indianapolis 500",
+    "KS_VALLELUNGA-CLUB_CIRCUIT": "Vallelunga Club Circuit"
 }
 
-/* Heading */
-h1 {
-  text-align: center;
-  color: #ff0000;
-  text-shadow: 2px 2px 5px #330000;       /* Glow effect for racing look */
-  margin-bottom: 30px;
-}
+def clean_name(name):
+    """Replace underscores with spaces."""
+    return name.replace("_", " ")
 
-/* Tabs container */
-.tabs {
-  margin-bottom: 20px;
-  text-align: center;
-}
+def main():
+    # Read original times.json
+    if not os.path.exists(INPUT_FILE):
+        print(f"{INPUT_FILE} not found.")
+        return
 
-/* Individual tab style */
-.tab {
-  display: inline-block;
-  padding: 12px 25px;
-  margin: 0 5px;
-  background: #111;                       /* Dark tab background */
-  color: #ff0000;
-  border: 2px solid #ff0000;              /* Red border */
-  border-radius: 10px;                     /* Rounded corners */
-  cursor: pointer;
-  font-weight: bold;
-  transition: 0.3s;
-}
+    with open(INPUT_FILE, "r", encoding="utf-8") as f:
+        data = json.load(f)
 
-/* Hover effect for tabs */
-.tab:hover {
-  background: #ff0000;
-  color: #000;
-  transform: scale(1.05);
-}
+    sessions = data.get("sessions", [])
 
-/* Active tab */
-.tab.active {
-  background: #ff0000;
-  color: #000;
-  box-shadow: 0 0 15px #ff0000;
-}
+    # Process each session
+    flat_sessions = []
+    for s in sessions:
+        flat_sessions.append({
+            "driver": s.get("driver", "Unknown"),
+            "car": clean_name(s.get("car", "Unknown")),
+            "track": TRACK_NAMES.get(s.get("track", ""), clean_name(s.get("track", "Unknown"))),
+            "date": s.get("date", "Unknown"),
+            "best_lap": s.get("best_lap", "N/A"),
+            "laps": s.get("laps", [])
+        })
 
-/* Table style */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-  background: #111;                       /* Dark table background */
-  color: #ff0000;
-  text-align: center;
-  box-shadow: 0 0 15px
+    # Save flattened JSON
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+        json.dump({"sessions": flat_sessions}, f, indent=2)
+
+    print(f"Updated {OUTPUT_FILE} successfully!")
+
+if __name__ == "__main__":
+    main()
