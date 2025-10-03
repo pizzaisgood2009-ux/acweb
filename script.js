@@ -1,81 +1,93 @@
-function cleanName(name) {
-  return name.replace(/_/g, ' ');
-}
-
-const trackNames = {
-  "KS_NURBURGRING-LAYOUT_GP_A": "Nürburgring GP",
-  "KS_SILVERSTONE-NATIONAL": "Silverstone National",
-  "AA_IMS-INDY500": "Indianapolis 500",
-  "KS_VALLELUNGA-CLUB_CIRCUIT": "Vallelunga Club Circuit"
-};
-
-function getTrackDisplayName(trackFileName) {
-  return trackNames[trackFileName] || cleanName(trackFileName);
-}
-
 const tabsDiv = document.getElementById("tabs");
 const contentDiv = document.getElementById("content");
 
+// Mapping for nicer display names
+const trackNames = {
+  "KS_NURBURGRING-LAYOUT_GP_A": "Nürburgring GP",
+  "KS_SILVERSTONE-NATIONAL": "Silverstone National",
+  "AA_IMS-INDY500": "Indy 500",
+  "KS_VALLELUNGA-CLUB_CIRCUIT": "Vallelunga Club"
+};
+
+const carNames = {
+  "FERRARI_458": "Ferrari 458",
+  "FERRARI_312T": "Ferrari 312T",
+  "RSS_FORMULA_AMERICAS_2020_OVAL": "Formula Americas 2020 Oval",
+  "ABARTH500": "Abarth 500"
+};
+
+// Fetch sessions and build tabs
 fetch("data/times_flat.json")
   .then(res => res.json())
   .then(data => {
-    const sessions = data.sessions;
+    const sessions = data.sessions || [];
+    if (!sessions.length) {
+      contentDiv.innerHTML = "<p>No lap times available.</p>";
+      return;
+    }
+
+    // Get unique drivers
     const drivers = [...new Set(sessions.map(s => s.driver))];
 
+    // Create tabs for each driver
     drivers.forEach((driver, i) => {
       const tab = document.createElement("div");
       tab.className = "tab" + (i === 0 ? " active" : "");
       tab.textContent = driver;
-      tab.onclick = () => showDriver(driver, tab);
+      tab.onclick = () => showDriver(driver, tab, sessions);
       tabsDiv.appendChild(tab);
     });
 
+    // Add Leaderboard tab
     const lbTab = document.createElement("div");
     lbTab.className = "tab";
     lbTab.textContent = "Track Leaderboard";
     lbTab.onclick = () => showLeaderboard(lbTab, sessions);
     tabsDiv.appendChild(lbTab);
 
-    showDriver(drivers[0], tabsDiv.firstChild);
+    // Show first driver by default
+    showDriver(drivers[0], tabsDiv.firstChild, sessions);
+  })
+  .catch(err => {
+    console.error(err);
+    contentDiv.innerHTML = "<p>Error loading lap times.</p>";
   });
 
-function showDriver(driver, tabElement) {
+// Show driver lap times
+function showDriver(driver, tabElement, sessions) {
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
   tabElement.classList.add("active");
 
-  fetch("./data/times.json")
-    .then(res => res.json())
-    .then(data => {
-      const driverSessions = data.sessions.filter(s => s.driver === driver);
-      if (!driverSessions.length) {
-        contentDiv.innerHTML = "<p>No lap times for this driver.</p>";
-        return;
-      }
+  const driverSessions = sessions.filter(s => s.driver === driver);
+  if (!driverSessions.length) {
+    contentDiv.innerHTML = "<p>No lap times for this driver.</p>";
+    return;
+  }
 
-      let html = `<table>
-        <tr><th>Car</th><th>Track</th><th>Date</th><th>Best Lap</th></tr>`;
+  let html = `<table>
+    <tr><th>Car</th><th>Track</th><th>Date</th><th>Best Lap</th></tr>`;
 
-      driverSessions.forEach(s => {
-        html += `<tr>
-          <td>${cleanName(s.car)}</td>
-          <td>${getTrackDisplayName(s.track)}</td>
-          <td>${s.date}</td>
-          <td>${s.best_lap}</td>
-        </tr>`;
-      });
+  driverSessions.forEach(s => {
+    html += `<tr>
+      <td>${carNames[s.car] || s.car.replace(/_/g, " ")}</td>
+      <td>${trackNames[s.track] || s.track.replace(/_/g, " ")}</td>
+      <td>${s.date}</td>
+      <td>${s.best_lap}</td>
+    </tr>`;
+  });
 
-      html += "</table>";
-      contentDiv.innerHTML = html;
-    });
+  html += "</table>";
+  contentDiv.innerHTML = html;
 }
 
+// Show track leaderboard
 function showLeaderboard(tabElement, sessions) {
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
   tabElement.classList.add("active");
 
-  let html = `<label>Select Track: </label>
-              <select id="trackSelect"></select>
-              <div id="leaderboardContent" style="margin-top:10px;"></div>`;
+  let html = `<label style="color:#ff6600;font-weight:bold;">Select Track: </label>`;
+  html += `<select id="trackSelect" style="padding:5px;font-weight:bold;"></select>`;
+  html += `<div id="leaderboardContent" style="margin-top:10px;"></div>`;
   contentDiv.innerHTML = html;
 
   const trackSelect = document.getElementById("trackSelect");
@@ -85,7 +97,7 @@ function showLeaderboard(tabElement, sessions) {
   tracks.forEach(track => {
     const option = document.createElement("option");
     option.value = track;
-    option.textContent = getTrackDisplayName(track);
+    option.textContent = trackNames[track] || track.replace(/_/g, " ");
     trackSelect.appendChild(option);
   });
 
@@ -93,16 +105,17 @@ function showLeaderboard(tabElement, sessions) {
   renderLeaderboard(tracks[0], lbContent, sessions);
 }
 
+// Render leaderboard for selected track
 function renderLeaderboard(track, container, sessions) {
   const trackSessions = sessions
     .filter(s => s.track === track)
     .sort((a, b) => {
-      const timeToSec = t => {
-        if(t==="N/A") return Infinity;
+      const toSec = t => {
+        if (!t || t === "N/A") return Infinity;
         const parts = t.split(":");
-        return parseInt(parts[0])*60 + parseFloat(parts[1]);
+        return parseInt(parts[0]) * 60 + parseFloat(parts[1]);
       };
-      return timeToSec(a.best_lap) - timeToSec(b.best_lap);
+      return toSec(a.best_lap) - toSec(b.best_lap);
     });
 
   if (!trackSessions.length) {
@@ -116,7 +129,7 @@ function renderLeaderboard(track, container, sessions) {
   trackSessions.forEach(s => {
     html += `<tr>
       <td>${s.driver}</td>
-      <td>${cleanName(s.car)}</td>
+      <td>${carNames[s.car] || s.car.replace(/_/g, " ")}</td>
       <td>${s.best_lap}</td>
       <td>${s.date}</td>
     </tr>`;
