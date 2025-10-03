@@ -1,4 +1,3 @@
-// ===== Helper Functions =====
 function cleanName(name) {
   return name.replace(/_/g, ' ');
 }
@@ -14,11 +13,9 @@ function getTrackDisplayName(trackFileName) {
   return trackNames[trackFileName] || cleanName(trackFileName);
 }
 
-// ===== DOM Elements =====
 const tabsDiv = document.getElementById("tabs");
 const contentDiv = document.getElementById("content");
 
-// ===== Load Driver Tabs =====
 fetch("data/times_flat.json")
   .then(res => res.json())
   .then(data => {
@@ -42,7 +39,6 @@ fetch("data/times_flat.json")
     showDriver(drivers[0], tabsDiv.firstChild);
   });
 
-// ===== Show Driver Lap Times =====
 function showDriver(driver, tabElement) {
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
   tabElement.classList.add("active");
@@ -73,7 +69,6 @@ function showDriver(driver, tabElement) {
     });
 }
 
-// ===== Track Leaderboard =====
 function showLeaderboard(tabElement, sessions) {
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
   tabElement.classList.add("active");
