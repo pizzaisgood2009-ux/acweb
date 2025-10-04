@@ -1,105 +1,60 @@
-/* General Reset */
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background-color: #111; /* dark racing background */
-  color: #ddd;
+  background: #121212;
+  color: #f1f1f1;
 }
 
-/* Navigation Bar */
-.race-nav {
-  background-color: #000;
-  border-bottom: 4px solid orange; /* racing stripe */
-  padding: 15px 0;
+header {
+  background: #ff6600;
+  padding: 15px;
+  text-align: center;
 }
 
-.race-nav ul {
-  list-style: none;
-  display: flex;
-  justify-content: center;
+header h1 {
   margin: 0;
-  padding: 0;
-}
-
-.race-nav ul li {
-  margin: 0 25px;
-}
-
-.race-nav ul li a {
-  text-decoration: none;
-  color: grey;
-  font-weight: bold;
-  font-size: 20px;
-  transition: color 0.3s ease, transform 0.2s ease;
-}
-
-.race-nav ul li a:hover {
-  color: orange;
-  transform: scale(1.1);
-}
-
-/* Hero Section */
-.hero {
-  text-align: center;
-  padding: 100px 20px;
-  background: linear-gradient(to bottom, #000, #222);
-  border-bottom: 4px solid orange;
-}
-
-.hero h1 {
-  font-size: 3em;
-  color: orange;
-}
-
-.hero p {
-  font-size: 1.2em;
-  color: grey;
-}
-
-/* Content Section */
-main {
-  padding: 40px;
-  text-align: center;
-}
-
-#lap-times {
-  margin-top: 20px;
-  padding: 15px;
-  background: #222;
-  border: 2px solid grey;
-  border-radius: 8px;
-  font-size: 1.1em;
-  color: orange;
-  text-align: left;
-  max-width: 700px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* Individual Session Card */
-.session {
-  background: #1a1a1a;
-  border-left: 5px solid orange;
-  padding: 15px;
-  margin-bottom: 15px;
-  border-radius: 6px;
-}
-
-.session h3 {
-  margin: 0 0 10px;
   color: #fff;
 }
 
-.session p {
-  margin: 5px 0;
-  color: #bbb;
+nav {
+  margin-top: 10px;
 }
 
-/* Footer */
-footer {
-  background: #000;
+nav a {
+  color: #fff;
+  margin: 0 15px;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+nav a.active {
+  border-bottom: 2px solid #fff;
+}
+
+main {
+  padding: 20px;
+}
+
+#leaderboard table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+#leaderboard th, #leaderboard td {
+  border: 1px solid #444;
+  padding: 10px;
   text-align: center;
-  padding: 15px;
-  border-top: 4px solid orange;
-  color: grey;
+}
+
+#leaderboard th {
+  background: #ff6600;
+  color: #fff;
+}
+
+footer {
+  background: #222;
+  text-align: center;
+  padding: 10px;
+  margin-top: 30px;
 }
