@@ -54,14 +54,6 @@ main {
     padding: 20px;
 }
 
-.tab-content {
-    display: none;
-}
-
-.tab-content.active {
-    display: block;
-}
-
 table {
     width: 100%;
     border-collapse: collapse;
@@ -94,12 +86,4 @@ tr:nth-child(odd) {
 tr.fastest {
     color: #00ff00;
     font-weight: bold;
-}
-
-footer {
-    text-align: center;
-    padding: 10px;
-    background: #0a0a0a;
-    border-top: 2px solid #ff0000;
-    color: #aaa;
 }
