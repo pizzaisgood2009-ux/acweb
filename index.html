@@ -9,16 +9,21 @@
 <body>
   <header>
     <h1>🏎️ Assetto Corsa Leaderboard</h1>
+    <nav>
+      <button class="tab-button" data-tab="leaderboard">Leaderboard</button>
+      <div id="driver-tabs"></div>
+    </nav>
   </header>
 
   <main>
-    <div id="leaderboard" class="leaderboard-container">
-      <p>Loading lap times...</p>
+    <div id="leaderboard" class="tab-content active">
+      <p>Loading leaderboard...</p>
     </div>
+    <div id="drivers"></div>
   </main>
 
   <footer>
-    <p>Built by Max · Powered by Assetto Corsa</p>
+    <p>Max’s Racing Portal</p>
   </footer>
 
   <script src="script.js"></script>
