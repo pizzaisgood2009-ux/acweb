@@ -6,12 +6,12 @@ body {
 }
 
 header {
-  background-color: #111;
+  background-color: #111; /* minimal black */
   padding: 10px 0;
   text-align: center;
   font-size: 1.8em;
   font-weight: bold;
-  color: #ff3d00; /* minimal red accent */
+  color: #ff3d00; /* red accent */
   letter-spacing: 2px;
   border-bottom: 2px solid #ff3d00;
 }
