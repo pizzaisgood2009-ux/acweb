@@ -1,85 +1,159 @@
 import os
 import json
-import datetime
+from datetime import datetime
 
-# 📂 Folder where your lap files are saved
-LAP_FOLDER = os.path.expanduser("~/Documents/Assetto Corsa/lap_times")  
-OUTPUT_FILE = "times.json"
+# Paths
+EXPORT_DIR = "export"
+TRACKS_DIR = os.path.join(EXPORT_DIR, "tracks")
+DRIVERS_DIR = os.path.join(EXPORT_DIR, "drivers")
 
-# ✅ Friendly track names (add more as needed)
-TRACK_NAMES = {
-    "KS_NURBURGRING-LAYOUT_GP_A": "Nürburgring GP",
-    "KS_SILVERSTONE-NATIONAL": "Silverstone National",
-    "AA_IMS-INDY500": "Indianapolis 500",
-    "KS_VALLELUNGA-CLUB_CIRCUIT": "Vallelunga Club"
-}
+# Make sure folders exist
+os.makedirs(TRACKS_DIR, exist_ok=True)
+os.makedirs(DRIVERS_DIR, exist_ok=True)
 
-def parse_lap_file(filepath):
-    """Parses a lap time file into a dict entry"""
-    try:
-        with open(filepath, "r", encoding="utf-8") as f:
-            lines = f.read().strip().splitlines()
-            if not lines:
-                return None
+STYLE = """
+<style>
+    body {
+        background-color: #0d0d0d;
+        color: #f2f2f2;
+        font-family: Arial, sans-serif;
+        margin: 20px;
+    }
+    h1, h2 {
+        color: #ff4500; /* orange-red */
+        border-bottom: 2px solid #e60000;
+        padding-bottom: 5px;
+    }
+    a {
+        color: #ff3300;
+        text-decoration: none;
+        margin: 0 10px;
+    }
+    a:hover {
+        color: #ff6600;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background: #1a1a1a;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    th, td {
+        padding: 10px;
+        text-align: left;
+    }
+    th {
+        background: #262626;
+        color: #ff6600;
+    }
+    tr:nth-child(even) {
+        background: #141414;
+    }
+    tr:nth-child(odd) {
+        background: #1f1f1f;
+    }
+    .fastest {
+        font-weight: bold;
+        color: #00ff66; /* highlight fastest */
+    }
+</style>
+"""
 
-            # Example: track,car,date,best_lap,laps,driver
-            data = json.loads("".join(lines)) if lines[0].startswith("{") else None
-            return data
-    except Exception as e:
-        print(f"❌ Error reading {filepath}: {e}")
-        return None
+def load_times():
+    """Load lap times from JSON files."""
+    times = []
+    for file in os.listdir(EXPORT_DIR):
+        if file.endswith(".json") and not file.startswith("update"):
+            with open(os.path.join(EXPORT_DIR, file), "r") as f:
+                data = json.load(f)
+                times.extend(data)
+    return times
 
-def convert_time_to_seconds(time_str):
-    """Convert lap time string (M:SS.mmm) to seconds for sorting"""
-    try:
-        mins, rest = time_str.split(":")
-        secs = float(rest)
-        return int(mins) * 60 + secs
-    except:
-        return float("inf")
+def format_time(ms):
+    """Convert ms to mm:ss.xxx format."""
+    total_seconds = ms / 1000
+    minutes = int(total_seconds // 60)
+    seconds = total_seconds % 60
+    return f"{minutes}:{seconds:06.3f}"
+
+def generate_driver_pages(times):
+    drivers = {}
+    for entry in times:
+        driver = entry["driver"]
+        track = entry["track"]
+        lap_time = entry["lap_time"]
+
+        if driver not in drivers:
+            drivers[driver] = []
+        drivers[driver].append((track, lap_time))
+
+    for driver, laps in drivers.items():
+        laps.sort(key=lambda x: x[1])  # sort fastest → slowest
+        with open(os.path.join(DRIVERS_DIR, f"{driver}.html"), "w") as f:
+            f.write("<html><head>" + STYLE + f"<title>{driver}</title></head><body>")
+            f.write(f"<h1>{driver}</h1>")
+            f.write('<a href="../index.html">🏁 Leaderboards</a>')
+            f.write("<table><tr><th>Track</th><th>Best Lap</th></tr>")
+            for track, lap in laps:
+                f.write(f"<tr><td>{track}</td><td>{format_time(lap)}</td></tr>")
+            f.write("</table></body></html>")
+
+def generate_track_pages(times):
+    tracks = {}
+    for entry in times:
+        track = entry["track"]
+        driver = entry["driver"]
+        lap_time = entry["lap_time"]
+
+        if track not in tracks:
+            tracks[track] = []
+        tracks[track].append((driver, lap_time))
+
+    for track, laps in tracks.items():
+        laps.sort(key=lambda x: x[1])  # fastest → slowest
+        with open(os.path.join(TRACKS_DIR, f"{track}.html"), "w") as f:
+            f.write("<html><head>" + STYLE + f"<title>{track}</title></head><body>")
+            f.write(f"<h1>{track} Leaderboard</h1>")
+            f.write('<a href="../index.html">🏁 Leaderboards</a>')
+            f.write("<table><tr><th>Pos</th><th>Driver</th><th>Lap Time</th></tr>")
+            for i, (driver, lap) in enumerate(laps, 1):
+                css_class = "fastest" if i == 1 else ""
+                f.write(f"<tr class='{css_class}'><td>{i}</td><td>{driver}</td><td>{format_time(lap)}</td></tr>")
+            f.write("</table></body></html>")
+
+def generate_index(times):
+    drivers = sorted(set(entry["driver"] for entry in times))
+    tracks = sorted(set(entry["track"] for entry in times))
+
+    with open(os.path.join(EXPORT_DIR, "index.html"), "w") as f:
+        f.write("<html><head>" + STYLE + "<title>Leaderboards</title></head><body>")
+        f.write("<h1>🏁 Leaderboards</h1>")
+        
+        f.write("<h2>Tracks</h2><ul>")
+        for track in tracks:
+            f.write(f"<li><a href='tracks/{track}.html'>{track}</a></li>")
+        f.write("</ul>")
+        
+        f.write("<h2>Drivers</h2><ul>")
+        for driver in drivers:
+            f.write(f"<li><a href='drivers/{driver}.html'>{driver}</a></li>")
+        f.write("</ul>")
+        
+        f.write("</body></html>")
 
 def main():
-    sessions = []
+    times = load_times()
+    if not times:
+        print("No lap times found.")
+        return
 
-    # 🔎 Walk through the lap times folder
-    for root, _, files in os.walk(LAP_FOLDER):
-        for file in files:
-            if file.endswith(".json"):  # assume AC exports json
-                path = os.path.join(root, file)
-                data = parse_lap_file(path)
-                if data:
-                    sessions.append(data)
-
-    # 📊 Group by track → leaderboard
-    leaderboard = {}
-    for s in sessions:
-        track = TRACK_NAMES.get(s["track"], s["track"])
-        driver = s.get("driver", "Unknown")
-        best = s.get("best_lap")
-
-        if not track or not best:
-            continue
-
-        if track not in leaderboard:
-            leaderboard[track] = []
-        leaderboard[track].append({
-            "driver": driver,
-            "car": s.get("car", "Unknown"),
-            "best_lap": best,
-            "time_sec": convert_time_to_seconds(best),
-            "date": s.get("date", str(datetime.datetime.now()))
-        })
-
-    # 🏆 Sort each track leaderboard by lap time
-    for track in leaderboard:
-        leaderboard[track].sort(key=lambda x: x["time_sec"])
-
-    # 💾 Write final times.json
-    output = {"leaderboard": leaderboard}
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        json.dump(output, f, indent=2)
-
-    print(f"✅ Export complete! {OUTPUT_FILE} updated with {len(sessions)} sessions.")
+    generate_driver_pages(times)
+    generate_track_pages(times)
+    generate_index(times)
+    print("✅ Export complete! Pages updated.")
 
 if __name__ == "__main__":
     main()
+
