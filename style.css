@@ -6,12 +6,14 @@ body {
 }
 
 header {
-  background: linear-gradient(90deg, #ff3d00, #ff9800);
-  padding: 20px;
+  background-color: #111;
+  padding: 10px 0;
   text-align: center;
-  font-size: 2em;
+  font-size: 1.8em;
   font-weight: bold;
-  color: #000;
+  color: #ff3d00; /* minimal red accent */
+  letter-spacing: 2px;
+  border-bottom: 2px solid #ff3d00;
 }
 
 #tabs {
