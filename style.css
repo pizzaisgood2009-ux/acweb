@@ -1,49 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
 body {
-    font-family: Arial, sans-serif;
-    background-color: #0d0d0d; /* deep black */
-    color: #f0f0f0; /* light text */
+    font-family: 'Orbitron', sans-serif;
+    background-color: #000;
+    color: #eee;
     margin: 0;
     padding: 0;
 }
 
 header {
-    background: #111;
-    padding: 15px;
+    background: #0a0a0a;
+    padding: 15px 0;
     text-align: center;
-    border-bottom: 3px solid #ff3300; /* orange accent */
+    border-bottom: 2px solid #ff0000;
 }
 
 header h1 {
-    color: #ff3300;
-    margin: 0;
-    font-size: 1.8em;
+    font-size: 2em;
+    color: #ff0000;
     letter-spacing: 2px;
-    text-transform: uppercase;
 }
 
 nav {
+    display: flex;
+    justify-content: center;
     margin-top: 10px;
 }
 
 .tab-button {
-    background: #222;
-    border: none;
+    background: #111;
+    border: 1px solid #222;
     color: #eee;
-    padding: 10px 20px;
-    margin: 5px;
+    padding: 10px 25px;
+    margin: 0 5px;
     cursor: pointer;
-    border-radius: 5px;
+    border-radius: 8px;
     transition: 0.3s;
+    font-weight: bold;
 }
 
 .tab-button:hover {
-    background: #ff3300;
-    color: white;
+    border-color: #ff0000;
+    box-shadow: 0 0 10px #ff0000;
 }
 
 .tab-button.active {
-    background: #cc0000; /* red active tab */
-    color: white;
+    background: #111;
+    border-color: #ff0000;
+    box-shadow: 0 0 15px #ff0000;
 }
 
 main {
@@ -58,46 +62,44 @@ main {
     display: block;
 }
 
-.track-section {
-    margin-bottom: 30px;
-    padding: 15px;
-    background: #1a1a1a;
-    border: 1px solid #333;
-    border-radius: 8px;
-}
-
-.track-section h2 {
-    color: #ff3300;
-    margin-bottom: 10px;
-}
-
 table {
     width: 100%;
     border-collapse: collapse;
+    margin-top: 15px;
     background: #111;
-    border-radius: 6px;
-    overflow: hidden;
+    border: 1px solid #222;
+    border-radius: 8px;
 }
 
 th, td {
     padding: 10px;
-    text-align: center;
+    text-align: left;
 }
 
 th {
-    background: #ff3300;
-    color: white;
+    background: #111;
+    color: #ff0000;
+    text-transform: uppercase;
+    border-bottom: 2px solid #ff0000;
 }
 
 tr:nth-child(even) {
-    background: #1c1c1c;
+    background: #0d0d0d;
+}
+
+tr:nth-child(odd) {
+    background: #111;
+}
+
+tr.fastest {
+    color: #00ff00;
+    font-weight: bold;
 }
 
 footer {
     text-align: center;
     padding: 10px;
-    background: #111;
-    border-top: 2px solid #ff3300;
+    background: #0a0a0a;
+    border-top: 2px solid #ff0000;
     color: #aaa;
-    font-size: 0.9em;
 }
