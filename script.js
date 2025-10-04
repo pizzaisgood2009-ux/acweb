@@ -1,42 +1,68 @@
-async function loadLeaderboard() {
-  try {
-    const response = await fetch("times.json");
-    const data = await response.json();
+document.addEventListener("DOMContentLoaded", async () => {
+    const tableContainer = document.getElementById("leaderboard");
 
-    const container = document.getElementById("leaderboard-content");
-    container.innerHTML = "";
+    try {
+        const response = await fetch("times.json");
+        if (!response.ok) throw new Error("Failed to load times.json");
 
-    for (const track in data) {
-      const table = document.createElement("table");
+        const data = await response.json();
+        const leaderboard = data.leaderboard;
 
-      // Track name
-      const caption = document.createElement("caption");
-      caption.textContent = track;
-      caption.style.fontSize = "1.5em";
-      caption.style.margin = "10px 0";
-      table.appendChild(caption);
+        tableContainer.innerHTML = ""; // clear old content
 
-      // Headers
-      const headerRow = document.createElement("tr");
-      headerRow.innerHTML = "<th>Driver</th><th>Lap Time</th>";
-      table.appendChild(headerRow);
+        // Loop through each track
+        for (const track in leaderboard) {
+            const trackData = leaderboard[track];
 
-      // Sort drivers by best lap
-      data[track]
-        .sort((a, b) => a.time.localeCompare(b.time))
-        .forEach(entry => {
-          const row = document.createElement("tr");
-          row.innerHTML = `<td>${entry.driver}</td><td>${entry.time}</td>`;
-          table.appendChild(row);
-        });
+            // 🏁 Track header
+            const trackSection = document.createElement("div");
+            trackSection.classList.add("track-section");
 
-      container.appendChild(table);
+            const trackHeader = document.createElement("h2");
+            trackHeader.textContent = track;
+            trackSection.appendChild(trackHeader);
+
+            // 📊 Leaderboard table
+            const table = document.createElement("table");
+            table.classList.add("leaderboard-table");
+
+            // Table header row
+            const headerRow = document.createElement("tr");
+            ["Pos", "Driver", "Car", "Best Lap"].forEach(text => {
+                const th = document.createElement("th");
+                th.textContent = text;
+                headerRow.appendChild(th);
+            });
+            table.appendChild(headerRow);
+
+            // Fill leaderboard rows
+            trackData.forEach((entry, index) => {
+                const row = document.createElement("tr");
+
+                const pos = document.createElement("td");
+                pos.textContent = index + 1;
+
+                const driver = document.createElement("td");
+                driver.textContent = entry.driver;
+
+                const car = document.createElement("td");
+                car.textContent = entry.car.replace(/_/g, " "); // no underscores
+
+                const lap = document.createElement("td");
+                lap.textContent = entry.best_lap;
+
+                row.appendChild(pos);
+                row.appendChild(driver);
+                row.appendChild(car);
+                row.appendChild(lap);
+                table.appendChild(row);
+            });
+
+            trackSection.appendChild(table);
+            tableContainer.appendChild(trackSection);
+        }
+    } catch (error) {
+        console.error("Error loading times:", error);
+        tableContainer.innerHTML = `<p class="error">⚠️ Error loading lap times</p>`;
     }
-  } catch (error) {
-    document.getElementById("leaderboard-content").textContent =
-      "Error loading leaderboard.";
-    console.error(error);
-  }
-}
-
-document.addEventListener("DOMContentLoaded", loadLeaderboard);
+});
