@@ -2,16 +2,41 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AC Lap Times</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+  <!-- Racing Navigation Bar -->
   <header>
-    <h1>🏁 Assetto Corsa Lap Times</h1>
+    <nav class="race-nav">
+      <ul>
+        <li><a href="index.html">🏁 Home</a></li>
+        <li><a href="drivers.html">👨‍✈️ Drivers</a></li>
+        <li><a href="cars.html">🚗 Cars</a></li>
+        <li><a href="tracks.html">🛣️ Tracks</a></li>
+        <li><a href="contact.html">📞 Contact</a></li>
+      </ul>
+    </nav>
   </header>
 
-  <div id="tabs"></div>
-  <div id="content"></div>
+  <!-- Hero Section -->
+  <section class="hero">
+    <h1>Assetto Corsa Lap Times</h1>
+    <p>Track your fastest laps and race to the top!</p>
+  </section>
+
+  <!-- Content Section -->
+  <main>
+    <h2>Latest Lap Times</h2>
+    <div id="lap-times">Loading lap times...</div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <p>🏎️ Built for racers by racers | © 2025 AC Lap Times</p>
+  </footer>
 
   <script src="script.js"></script>
 </body>
