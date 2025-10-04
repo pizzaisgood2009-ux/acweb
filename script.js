@@ -1,132 +1,35 @@
-const tabsDiv = document.getElementById("tabs");
-const contentDiv = document.getElementById("content");
+// Fetch and display lap times
+async function loadLapTimes() {
+  try {
+    // Fetch times.json (must be in same repo root as index.html)
+    const response = await fetch("times.json");
+    if (!response.ok) {
+      throw new Error("Failed to load times.json");
+    }
 
-const trackNames = {
-  "KS_NURBURGRING-LAYOUT_GP_A": "Nürburgring GP",
-  "KS_SILVERSTONE-NATIONAL": "Silverstone National",
-  "AA_IMS-INDY500": "Indy 500",
-  "KS_VALLELUNGA-CLUB_CIRCUIT": "Vallelunga Club"
-};
+    const data = await response.json();
+    const container = document.getElementById("lap-times");
 
-const carNames = {
-  "FERRARI_458": "Ferrari 458",
-  "FERRARI_312T": "Ferrari 312T",
-  "RSS_FORMULA_AMERICAS_2020_OVAL": "Formula Americas 2020 Oval",
-  "ABARTH500": "Abarth 500"
-};
-
-// Fetch sessions and build tabs
-fetch("data/times_flat.json")
-  .then(res => res.json())
-  .then(data => {
-    const sessions = data.sessions || [];
-    if (!sessions.length) {
-      contentDiv.innerHTML = "<p>No lap times available.</p>";
+    if (!data.sessions || data.sessions.length === 0) {
+      container.innerHTML = "<p>No lap times available.</p>";
       return;
     }
 
-    const drivers = [...new Set(sessions.map(s => s.driver))];
+    // Build HTML for each session
+    container.innerHTML = data.sessions.map(session => `
+      <div class="session">
+        <h3>${session.track} - ${session.car}</h3>
+        <p><strong>Driver:</strong> ${session.driver}</p>
+        <p><strong>Date:</strong> ${session.date}</p>
+        <p><strong>Best Lap:</strong> ${session.best_lap}</p>
+      </div>
+    `).join("");
 
-    drivers.forEach((driver, i) => {
-      const tab = document.createElement("div");
-      tab.className = "tab" + (i === 0 ? " active" : "");
-      tab.textContent = driver;
-      tab.onclick = () => showDriver(driver, tab, sessions);
-      tabsDiv.appendChild(tab);
-    });
-
-    const lbTab = document.createElement("div");
-    lbTab.className = "tab";
-    lbTab.textContent = "Track Leaderboard";
-    lbTab.onclick = () => showLeaderboard(lbTab, sessions);
-    tabsDiv.appendChild(lbTab);
-
-    showDriver(drivers[0], tabsDiv.firstChild, sessions);
-  })
-  .catch(err => {
-    console.error(err);
-    contentDiv.innerHTML = "<p>Error loading lap times.</p>";
-  });
-
-function showDriver(driver, tabElement, sessions) {
-  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-  tabElement.classList.add("active");
-
-  const driverSessions = sessions.filter(s => s.driver === driver);
-  if (!driverSessions.length) {
-    contentDiv.innerHTML = "<p>No lap times for this driver.</p>";
-    return;
+  } catch (error) {
+    console.error("Error loading lap times:", error);
+    document.getElementById("lap-times").innerHTML =
+      "<p style='color:red;'>Error loading lap times.</p>";
   }
-
-  let html = `<table>
-    <tr><th>Car</th><th>Track</th><th>Date</th><th>Best Lap</th></tr>`;
-
-  driverSessions.forEach(s => {
-    html += `<tr>
-      <td>${carNames[s.car] || s.car.replace(/_/g, " ")}</td>
-      <td>${trackNames[s.track] || s.track.replace(/_/g, " ")}</td>
-      <td>${s.date}</td>
-      <td>${s.best_lap}</td>
-    </tr>`;
-  });
-
-  html += "</table>";
-  contentDiv.innerHTML = html;
 }
 
-function showLeaderboard(tabElement, sessions) {
-  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-  tabElement.classList.add("active");
-
-  let html = `<label style="color:#ff6600;font-weight:bold;">Select Track: </label>`;
-  html += `<select id="trackSelect" style="padding:5px;font-weight:bold;"></select>`;
-  html += `<div id="leaderboardContent" style="margin-top:10px;"></div>`;
-  contentDiv.innerHTML = html;
-
-  const trackSelect = document.getElementById("trackSelect");
-  const lbContent = document.getElementById("leaderboardContent");
-
-  const tracks = [...new Set(sessions.map(s => s.track))];
-  tracks.forEach(track => {
-    const option = document.createElement("option");
-    option.value = track;
-    option.textContent = trackNames[track] || track.replace(/_/g, " ");
-    trackSelect.appendChild(option);
-  });
-
-  trackSelect.onchange = () => renderLeaderboard(trackSelect.value, lbContent, sessions);
-  renderLeaderboard(tracks[0], lbContent, sessions);
-}
-
-function renderLeaderboard(track, container, sessions) {
-  const trackSessions = sessions
-    .filter(s => s.track === track)
-    .sort((a, b) => {
-      const toSec = t => {
-        if (!t || t === "N/A") return Infinity;
-        const parts = t.split(":");
-        return parseInt(parts[0]) * 60 + parseFloat(parts[1]);
-      };
-      return toSec(a.best_lap) - toSec(b.best_lap);
-    });
-
-  if (!trackSessions.length) {
-    container.innerHTML = "<p>No lap times for this track.</p>";
-    return;
-  }
-
-  let html = `<table>
-    <tr><th>Driver</th><th>Car</th><th>Best Lap</th><th>Date</th></tr>`;
-
-  trackSessions.forEach(s => {
-    html += `<tr>
-      <td>${s.driver}</td>
-      <td>${carNames[s.car] || s.car.replace(/_/g, " ")}</td>
-      <td>${s.best_lap}</td>
-      <td>${s.date}</td>
-    </tr>`;
-  });
-
-  html += "</table>";
-  container.innerHTML = html;
-}
+loadLapTimes();
