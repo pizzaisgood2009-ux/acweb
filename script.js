@@ -1,114 +1,118 @@
-document.addEventListener("DOMContentLoaded", async () => {
-    const leaderboardTab = document.getElementById("leaderboard");
-    const driverTabsContainer = document.getElementById("driver-tabs");
-    const driversContainer = document.getElementById("drivers");
+const tabsDiv = document.getElementById("tabs");
+const contentDiv = document.getElementById("content");
 
-    try {
-        const response = await fetch("times.json");
-        if (!response.ok) throw new Error("Failed to load times.json");
+fetch("data/times.json")
+    .then(res => res.json())
+    .then(data => {
+        const sessions = data.sessions;
 
-        const data = await response.json();
-        const leaderboard = data.leaderboard;
+        // Get unique drivers
+        const drivers = [...new Set(sessions.map(s => s.driver))];
 
-        // Utility: clean up names
-        function cleanName(name) {
-            return name.replace(/_/g, " ")
-                       .replace(/\b\w/g, c => c.toUpperCase());
-        }
-
-        // Collect unique drivers
-        const drivers = new Set();
-        for (const track in leaderboard) {
-            leaderboard[track].forEach(entry => drivers.add(entry.driver));
-        }
-
-        // Create driver tabs
-        drivers.forEach(driver => {
-            const btn = document.createElement("button");
-            btn.className = "tab-button";
-            btn.textContent = driver;
-            btn.dataset.tab = `driver-${driver}`;
-            driverTabsContainer.appendChild(btn);
-
-            const content = document.createElement("div");
-            content.id = `driver-${driver}`;
-            content.className = "tab-content";
-            content.innerHTML = `<h2>${driver}'s Best Laps</h2>`;
-            driversContainer.appendChild(content);
+        // Create tabs for each driver
+        drivers.forEach((driver, i) => {
+            const tab = document.createElement("div");
+            tab.className = "tab-button" + (i === 0 ? " active" : "");
+            tab.textContent = driver;
+            tab.onclick = () => showDriver(driver, tab);
+            tabsDiv.appendChild(tab);
         });
 
-        // Leaderboard (per track)
-        leaderboardTab.innerHTML = "";
-        for (const track in leaderboard) {
-            const trackData = leaderboard[track];
-            const section = document.createElement("div");
-            section.className = "track-section";
+        // Add Leaderboard tab
+        const lbTab = document.createElement("div");
+        lbTab.className = "tab-button";
+        lbTab.textContent = "Track Leaderboard";
+        lbTab.onclick = () => showLeaderboard(lbTab, sessions);
+        tabsDiv.appendChild(lbTab);
 
-            section.innerHTML = `<h2>${cleanName(track)}</h2>`;
-            const table = document.createElement("table");
+        // Show first driver by default
+        showDriver(drivers[0], tabsDiv.firstChild);
+    });
 
-            const headerRow = document.createElement("tr");
-            ["Pos", "Driver", "Car", "Best Lap"].forEach(h => {
-                const th = document.createElement("th");
-                th.textContent = h;
-                headerRow.appendChild(th);
-            });
-            table.appendChild(headerRow);
+// Show driver lap times
+function showDriver(driver, tabElement) {
+    document.querySelectorAll(".tab-button").forEach(t => t.classList.remove("active"));
+    tabElement.classList.add("active");
 
-            trackData.forEach((entry, index) => {
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${entry.driver}</td>
-                    <td>${cleanName(entry.car)}</td>
-                    <td>${entry.best_lap}</td>
-                `;
-                table.appendChild(row);
+    fetch("data/times.json")
+        .then(res => res.json())
+        .then(data => {
+            const driverSessions = data.sessions.filter(s => s.driver === driver);
+            if (!driverSessions.length) {
+                contentDiv.innerHTML = "<p>No lap times for this driver.</p>";
+                return;
+            }
 
-                // Add to driver's tab
-                const driverContent = document.getElementById(`driver-${entry.driver}`);
-                if (driverContent) {
-                    if (!driverContent.querySelector("table")) {
-                        const driverTable = document.createElement("table");
-                        driverTable.innerHTML = `
-                            <tr><th>Track</th><th>Car</th><th>Best Lap</th></tr>
-                        `;
-                        driverContent.appendChild(driverTable);
-                    }
-                    const driverTable = driverContent.querySelector("table");
-                    const driverRow = document.createElement("tr");
-                    driverRow.innerHTML = `
-                        <td>${cleanName(track)}</td>
-                        <td>${cleanName(entry.car)}</td>
-                        <td>${entry.best_lap}</td>
-                    `;
-                    driverTable.appendChild(driverRow);
-                }
+            let html = `<table>
+                <tr><th>Car</th><th>Track</th><th>Date</th><th>Best Lap</th></tr>`;
+
+            driverSessions.forEach(s => {
+                html += `<tr>
+                    <td>${s.car.replace(/_/g, ' ')}</td>
+                    <td>${s.track.replace(/_/g, ' ')}</td>
+                    <td>${s.date}</td>
+                    <td>${s.best_lap}</td>
+                </tr>`;
             });
 
-            section.appendChild(table);
-            leaderboardTab.appendChild(section);
-        }
+            html += "</table>";
+            contentDiv.innerHTML = html;
+        });
+}
 
-        // Tab switching
-        const tabs = document.querySelectorAll(".tab-button");
-        const contents = document.querySelectorAll(".tab-content");
+// Show track leaderboard
+function showLeaderboard(tabElement, sessions) {
+    document.querySelectorAll(".tab-button").forEach(t => t.classList.remove("active"));
+    tabElement.classList.add("active");
 
-        tabs.forEach(tab => {
-            tab.addEventListener("click", () => {
-                tabs.forEach(t => t.classList.remove("active"));
-                contents.forEach(c => c.classList.remove("active"));
-                tab.classList.add("active");
-                document.getElementById(tab.dataset.tab).classList.add("active");
-            });
+    let html = `<label>Select Track: </label>
+                <select id="trackSelect"></select>
+                <div id="leaderboardContent" style="margin-top:15px;"></div>`;
+    contentDiv.innerHTML = html;
+
+    const trackSelect = document.getElementById("trackSelect");
+    const lbContent = document.getElementById("leaderboardContent");
+
+    const tracks = [...new Set(sessions.map(s => s.track))];
+    tracks.forEach(track => {
+        const option = document.createElement("option");
+        option.value = track;
+        option.textContent = track.replace(/_/g, ' ');
+        trackSelect.appendChild(option);
+    });
+
+    trackSelect.onchange = () => renderLeaderboard(trackSelect.value, lbContent, sessions);
+    renderLeaderboard(tracks[0], lbContent, sessions);
+}
+
+function renderLeaderboard(track, container, sessions) {
+    const trackSessions = sessions
+        .filter(s => s.track === track)
+        .sort((a, b) => {
+            const timeToSec = t => {
+                const parts = t.split(":");
+                return parseInt(parts[0])*60 + parseFloat(parts[1]);
+            };
+            return timeToSec(a.best_lap) - timeToSec(b.best_lap);
         });
 
-        // Default = leaderboard
-        document.querySelector('.tab-button[data-tab="leaderboard"]').classList.add("active");
-        document.getElementById("leaderboard").classList.add("active");
-
-    } catch (err) {
-        console.error("Error loading times:", err);
-        leaderboardTab.innerHTML = `<p class="error">⚠️ Error loading lap times</p>`;
+    if (!trackSessions.length) {
+        container.innerHTML = "<p>No lap times for this track.</p>";
+        return;
     }
-});
+
+    let html = `<table>
+        <tr><th>Pos</th><th>Driver</th><th>Car</th><th>Best Lap</th></tr>`;
+
+    trackSessions.forEach((s, i) => {
+        html += `<tr class="${i===0?'fastest':''}">
+            <td>${i+1}</td>
+            <td>${s.driver}</td>
+            <td>${s.car.replace(/_/g, ' ')}</td>
+            <td>${s.best_lap}</td>
+        </tr>`;
+    });
+
+    html += "</table>";
+    container.innerHTML = html;
+}
