@@ -21,6 +21,12 @@
       border-radius: 12px;
       backdrop-filter: blur(10px);
     }
+    .gold-glow {
+      background: linear-gradient(135deg, #facc15 0%, #eab308 100%);
+      color: #000;
+      font-weight: bold;
+      border-radius: 8px;
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-start py-10">
@@ -41,7 +47,6 @@
   <script>
     const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0L2HtZ0QC3ZlIpCwOrzGVQY0cOUDGaQj2DtBNQuqvLKwQ4sLfRmAcb5LG4H9Q3D1CFkilV5QdIwge/pub?output=csv";
 
-    // Convert a lap time string like "1:23.45" to seconds
     function parseLapTime(timeStr) {
       if (!timeStr) return Infinity;
       const parts = timeStr.split(":");
@@ -66,7 +71,6 @@
 
         const tracks = {};
 
-        // Group rows by track
         rows.forEach(row => {
           const track = row[trackIndex];
           if (!tracks[track]) tracks[track] = [];
@@ -80,7 +84,6 @@
 
         let html = "";
 
-        // Build leaderboard per track
         Object.keys(tracks).forEach(track => {
           const racers = tracks[track].sort((a, b) => a.lapSeconds - b.lapSeconds);
           html += `
@@ -97,11 +100,11 @@
               </thead>
               <tbody>
                 ${racers.map((r, i) => `
-                  <tr class="hover:bg-yellow-500/10 transition-all duration-200">
-                    <td class="p-3 border-b border-gray-700 text-yellow-300 font-bold">${i + 1}</td>
-                    <td class="p-3 border-b border-gray-700 text-gray-200">${r.car}</td>
-                    <td class="p-3 border-b border-gray-700 text-gray-200">${r.lap}</td>
-                    <td class="p-3 border-b border-gray-700 text-gray-400">${r.winner}</td>
+                  <tr class="${i === 0 ? 'gold-glow' : 'hover:bg-yellow-500/10 transition-all duration-200'}">
+                    <td class="p-3 border-b border-gray-700 text-center">${i + 1}</td>
+                    <td class="p-3 border-b border-gray-700">${r.car}</td>
+                    <td class="p-3 border-b border-gray-700">${r.lap}</td>
+                    <td class="p-3 border-b border-gray-700">${r.winner}</td>
                   </tr>
                 `).join("")}
               </tbody>
@@ -118,7 +121,7 @@
     }
 
     loadLeaderboards();
-    setInterval(loadLeaderboards, 120000); // auto-refresh every 2 minutes
+    setInterval(loadLeaderboards, 120000);
   </script>
 </body>
 </html>
