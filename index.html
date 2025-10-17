@@ -1,127 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Apex Times Race Leaderboards</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.2/dist/tailwind.min.css" rel="stylesheet">
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap');
-    body {
-      background: radial-gradient(circle at center, #111 0%, #000 80%);
-      color: white;
-      font-family: 'Orbitron', sans-serif;
-    }
-    .glow {
-      text-shadow: 0 0 10px #facc15, 0 0 20px #facc15, 0 0 30px #facc15;
-    }
-    .card {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      backdrop-filter: blur(10px);
-    }
-    .gold-glow {
-      background: linear-gradient(135deg, #facc15 0%, #eab308 100%);
-      color: #000;
-      font-weight: bold;
-      border-radius: 8px;
-    }
-  </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Apex Leaderboards</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body class="min-h-screen flex flex-col items-center justify-start py-10">
+<body>
+  <div class="wrap">
+    <header class="header">
+      <h1 class="title">Apex Leaderboards</h1>
+      <p class="subtitle">Select a track to view that race's results (sorted by fastest lap)</p>
+    </header>
 
-  <header class="text-center mb-10">
-    <h1 class="text-5xl font-bold glow mb-2">🏁 Apex Times Leaderboards</h1>
-    <p class="text-gray-400 tracking-widest">Fastest lap rankings by track — updated live</p>
-  </header>
+    <div class="controls card-3d">
+      <label for="trackPicker" class="label">Track</label>
+      <select id="trackPicker" aria-label="Select track">
+        <option value="">Select a Track</option>
+      </select>
+      <div id="dateDisplay" class="date-display"></div>
+    </div>
 
-  <main id="leaderboards" class="w-full max-w-6xl px-6 space-y-12">
-    <p class="text-center text-gray-400">Loading race data...</p>
-  </main>
+    <main id="boardContainer" class="board centered">
+      <div id="placeholder" class="placeholder">No track selected — pick one above</div>
+    </main>
 
-  <footer class="text-center mt-10 text-gray-500 text-sm">
-    Powered by <span class="text-yellow-400 font-semibold">Apex Times</span>
-  </footer>
+    <footer class="footer">Powered by Apex Times</footer>
+  </div>
 
   <script>
+    // Paste your published CSV link here:
     const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0L2HtZ0QC3ZlIpCwOrzGVQY0cOUDGaQj2DtBNQuqvLKwQ4sLfRmAcb5LG4H9Q3D1CFkilV5QdIwge/pub?output=csv";
-
-    function parseLapTime(timeStr) {
-      if (!timeStr) return Infinity;
-      const parts = timeStr.split(":");
-      if (parts.length === 2) {
-        const minutes = parseFloat(parts[0]);
-        const seconds = parseFloat(parts[1]);
-        return minutes * 60 + seconds;
-      }
-      return parseFloat(timeStr) || Infinity;
-    }
-
-    async function loadLeaderboards() {
-      try {
-        const response = await fetch(SHEET_URL);
-        const csv = await response.text();
-        const rows = csv.trim().split("\n").map(r => r.split(",").map(x => x.trim()));
-        const headers = rows.shift();
-        const trackIndex = headers.indexOf("Track");
-        const carIndex = headers.indexOf("Car");
-        const lapIndex = headers.indexOf("Fastest Lap");
-        const winnerIndex = headers.indexOf("Race Winner");
-
-        const tracks = {};
-
-        rows.forEach(row => {
-          const track = row[trackIndex];
-          if (!tracks[track]) tracks[track] = [];
-          tracks[track].push({
-            car: row[carIndex],
-            lap: row[lapIndex],
-            winner: row[winnerIndex],
-            lapSeconds: parseLapTime(row[lapIndex])
-          });
-        });
-
-        let html = "";
-
-        Object.keys(tracks).forEach(track => {
-          const racers = tracks[track].sort((a, b) => a.lapSeconds - b.lapSeconds);
-          html += `
-          <section class="card p-6 border-yellow-400/30 shadow-lg shadow-yellow-400/10">
-            <h2 class="text-3xl font-bold text-yellow-400 mb-4 glow text-center">${track}</h2>
-            <table class="w-full text-left border-collapse">
-              <thead>
-                <tr class="bg-yellow-500/20 text-yellow-300 uppercase text-sm">
-                  <th class="p-3 border-b border-yellow-400/20">#</th>
-                  <th class="p-3 border-b border-yellow-400/20">Car</th>
-                  <th class="p-3 border-b border-yellow-400/20">Fastest Lap</th>
-                  <th class="p-3 border-b border-yellow-400/20">Race Winner</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${racers.map((r, i) => `
-                  <tr class="${i === 0 ? 'gold-glow' : 'hover:bg-yellow-500/10 transition-all duration-200'}">
-                    <td class="p-3 border-b border-gray-700 text-center">${i + 1}</td>
-                    <td class="p-3 border-b border-gray-700">${r.car}</td>
-                    <td class="p-3 border-b border-gray-700">${r.lap}</td>
-                    <td class="p-3 border-b border-gray-700">${r.winner}</td>
-                  </tr>
-                `).join("")}
-              </tbody>
-            </table>
-          </section>
-          `;
-        });
-
-        document.getElementById("leaderboards").innerHTML = html || "<p class='text-center text-gray-400'>No data found.</p>";
-      } catch (error) {
-        console.error(error);
-        document.getElementById("leaderboards").innerHTML = "<p class='text-center text-red-500'>⚠️ Error loading leaderboard data.</p>";
-      }
-    }
-
-    loadLeaderboards();
-    setInterval(loadLeaderboards, 120000);
   </script>
+  <script src="script.js"></script>
 </body>
 </html>
