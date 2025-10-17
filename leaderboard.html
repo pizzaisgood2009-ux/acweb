@@ -3,16 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Apex Times Race Leaderboard</title>
+  <title>Apex Times Race Leaderboards</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.2/dist/tailwind.min.css" rel="stylesheet">
-
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap');
     body {
       background: radial-gradient(circle at center, #111 0%, #000 80%);
       color: white;
       font-family: 'Orbitron', sans-serif;
     }
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap');
     .glow {
       text-shadow: 0 0 10px #facc15, 0 0 20px #facc15, 0 0 30px #facc15;
     }
@@ -27,14 +26,12 @@
 <body class="min-h-screen flex flex-col items-center justify-start py-10">
 
   <header class="text-center mb-10">
-    <h1 class="text-5xl font-bold glow mb-2">🏁 Apex Times Race Leaderboard</h1>
-    <p class="text-gray-400 tracking-widest">Live results — updated automatically from Google Sheets</p>
+    <h1 class="text-5xl font-bold glow mb-2">🏁 Apex Times Leaderboards</h1>
+    <p class="text-gray-400 tracking-widest">Fastest lap rankings by track — updated live</p>
   </header>
 
-  <main class="w-full max-w-6xl px-6">
-    <div id="leaderboard-table" class="card p-4 overflow-x-auto shadow-lg border-yellow-400/30 shadow-yellow-400/10">
-      <p class="text-center text-gray-400">Loading leaderboard...</p>
-    </div>
+  <main id="leaderboards" class="w-full max-w-6xl px-6 space-y-12">
+    <p class="text-center text-gray-400">Loading race data...</p>
   </main>
 
   <footer class="text-center mt-10 text-gray-500 text-sm">
@@ -42,45 +39,86 @@
   </footer>
 
   <script>
-    async function loadLeaderboard() {
-      const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0L2HtZ0QC3ZlIpCwOrzGVQY0cOUDGaQj2DtBNQuqvLKwQ4sLfRmAcb5LG4H9Q3D1CFkilV5QdIwge/pub?output=csv";
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0L2HtZ0QC3ZlIpCwOrzGVQY0cOUDGaQj2DtBNQuqvLKwQ4sLfRmAcb5LG4H9Q3D1CFkilV5QdIwge/pub?output=csv";
+
+    // Convert a lap time string like "1:23.45" to seconds
+    function parseLapTime(timeStr) {
+      if (!timeStr) return Infinity;
+      const parts = timeStr.split(":");
+      if (parts.length === 2) {
+        const minutes = parseFloat(parts[0]);
+        const seconds = parseFloat(parts[1]);
+        return minutes * 60 + seconds;
+      }
+      return parseFloat(timeStr) || Infinity;
+    }
+
+    async function loadLeaderboards() {
       try {
-        const response = await fetch(sheetUrl);
-        const csvText = await response.text();
-        const rows = csvText.trim().split("\n").map(r => r.split(","));
+        const response = await fetch(SHEET_URL);
+        const csv = await response.text();
+        const rows = csv.trim().split("\n").map(r => r.split(",").map(x => x.trim()));
+        const headers = rows.shift();
+        const trackIndex = headers.indexOf("Track");
+        const carIndex = headers.indexOf("Car");
+        const lapIndex = headers.indexOf("Fastest Lap");
+        const winnerIndex = headers.indexOf("Race Winner");
 
-        let html = `<table class="w-full text-left border-collapse">`;
-        rows.forEach((row, i) => {
-          if (i === 0) {
-            // Header row
-            html += `<thead><tr class="bg-yellow-500/20 text-yellow-300 uppercase text-sm">`;
-            row.forEach(cell => {
-              html += `<th class="p-3 border-b border-yellow-400/20">${cell}</th>`;
-            });
-            html += `</tr></thead><tbody>`;
-          } else {
-            // Data rows
-            html += `<tr class="hover:bg-yellow-500/10 transition-all duration-200">`;
-            row.forEach((cell, j) => {
-              const style = j === 0 ? "font-bold text-yellow-300" : "text-gray-200";
-              html += `<td class="p-3 border-b border-gray-700 ${style}">${cell}</td>`;
-            });
-            html += `</tr>`;
-          }
+        const tracks = {};
+
+        // Group rows by track
+        rows.forEach(row => {
+          const track = row[trackIndex];
+          if (!tracks[track]) tracks[track] = [];
+          tracks[track].push({
+            car: row[carIndex],
+            lap: row[lapIndex],
+            winner: row[winnerIndex],
+            lapSeconds: parseLapTime(row[lapIndex])
+          });
         });
-        html += `</tbody></table>`;
 
-        document.getElementById("leaderboard-table").innerHTML = html;
+        let html = "";
+
+        // Build leaderboard per track
+        Object.keys(tracks).forEach(track => {
+          const racers = tracks[track].sort((a, b) => a.lapSeconds - b.lapSeconds);
+          html += `
+          <section class="card p-6 border-yellow-400/30 shadow-lg shadow-yellow-400/10">
+            <h2 class="text-3xl font-bold text-yellow-400 mb-4 glow text-center">${track}</h2>
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-yellow-500/20 text-yellow-300 uppercase text-sm">
+                  <th class="p-3 border-b border-yellow-400/20">#</th>
+                  <th class="p-3 border-b border-yellow-400/20">Car</th>
+                  <th class="p-3 border-b border-yellow-400/20">Fastest Lap</th>
+                  <th class="p-3 border-b border-yellow-400/20">Race Winner</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${racers.map((r, i) => `
+                  <tr class="hover:bg-yellow-500/10 transition-all duration-200">
+                    <td class="p-3 border-b border-gray-700 text-yellow-300 font-bold">${i + 1}</td>
+                    <td class="p-3 border-b border-gray-700 text-gray-200">${r.car}</td>
+                    <td class="p-3 border-b border-gray-700 text-gray-200">${r.lap}</td>
+                    <td class="p-3 border-b border-gray-700 text-gray-400">${r.winner}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </section>
+          `;
+        });
+
+        document.getElementById("leaderboards").innerHTML = html || "<p class='text-center text-gray-400'>No data found.</p>";
       } catch (error) {
-        document.getElementById("leaderboard-table").innerHTML =
-          "<p class='text-center text-red-500'>⚠️ Error loading leaderboard data.</p>";
         console.error(error);
+        document.getElementById("leaderboards").innerHTML = "<p class='text-center text-red-500'>⚠️ Error loading leaderboard data.</p>";
       }
     }
 
-    loadLeaderboard();
-    // Auto-refresh every 2 minutes (120000 ms)
-    setInterval(loadLeaderboard, 120000);
+    loadLeaderboards();
+    setInterval(loadLeaderboards, 120000); // auto-refresh every 2 minutes
   </script>
 </body>
 </html>
