@@ -1,0 +1,57 @@
+body {
+  background: radial-gradient(circle at center, #111 0%, #000 100%);
+  color: white;
+  font-family: 'Orbitron', sans-serif;
+  text-align: center;
+  padding: 20px;
+}
+
+.title {
+  font-size: 2.5em;
+  margin-bottom: 30px;
+  color: #ffcc00;
+  text-shadow: 0 0 10px #ffcc00;
+}
+
+.track-section {
+  margin-bottom: 50px;
+}
+
+.track-name {
+  font-size: 2em;
+  margin-bottom: 10px;
+  color: #00bfff;
+  text-shadow: 0 0 10px #00bfff;
+}
+
+table {
+  width: 80%;
+  margin: 0 auto;
+  border-collapse: collapse;
+  box-shadow: 0 0 20px rgba(255,255,255,0.1);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+th, td {
+  padding: 12px;
+  border-bottom: 1px solid #333;
+}
+
+th {
+  background: #222;
+  color: #ffcc00;
+}
+
+tr:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+tr:nth-child(1) {
+  background: rgba(255, 215, 0, 0.2);
+  font-weight: bold;
+}
+
+tr:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
