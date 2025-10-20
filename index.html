@@ -6,33 +6,26 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
+  <div id="mainContainer">
     <!-- Title -->
-    <h1 id="siteTitle">Assetto Corsa Times</h1>
+    <div id="title">Assetto Corsa Times</div>
 
     <!-- Tabs -->
-    <div id="tabsRow" class="tabs-row"></div>
+    <div id="tabsRow"></div>
 
-    <!-- Track dropdown + reset -->
-    <div class="track-picker-container">
-      <select id="trackPicker">
-        <option value="">Select Track</option>
-      </select>
-      <button id="resetTrack">Reset</button>
-    </div>
+    <!-- Track Dropdown -->
+    <select id="trackPicker">
+      <option value="">Select Track</option>
+    </select>
 
-    <!-- Race date -->
-    <div id="dateDisplay" class="race-date"></div>
+    <!-- Podium -->
+    <div id="podiumContainer" style="display:flex; justify-content:center; gap:15px;"></div>
 
-    <!-- Podium top 3 -->
-    <div id="podiumContainer" class="podium"></div>
-
-    <!-- Leaderboard table -->
-    <div id="boardContainer" class="leaderboard">
-      <div class="placeholder">Select a track to view results</div>
-    </div>
+    <!-- Leaderboard Table -->
+    <div id="boardContainer"></div>
   </div>
 
+  <!-- JS -->
   <script src="script.js"></script>
 </body>
 </html>
