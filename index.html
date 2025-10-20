@@ -1,37 +1,45 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Apex Leaderboards</title>
+  <title>Apex Leaderboards — Multi-Sheet Tabs</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="wrap">
+
     <header class="header">
       <h1 class="title">Apex Leaderboards</h1>
-      <p class="subtitle">Select a track to view that race's results (sorted by fastest lap)</p>
+      <p class="subtitle">Pick a series (tab) then a track — results sorted by fastest lap</p>
     </header>
 
-    <div class="controls card-3d">
-      <label for="trackPicker" class="label">Track</label>
-      <select id="trackPicker" aria-label="Select track">
-        <option value="">Select a Track</option>
-      </select>
-      <div id="dateDisplay" class="date-display"></div>
-    </div>
+    <!-- center rectangle with folder-style tabs -->
+    <div class="center-card">
 
-    <main id="boardContainer" class="board centered">
-      <div id="placeholder" class="placeholder">No track selected — pick one above</div>
-    </main>
+      <!-- tabs (inserted dynamically) -->
+      <div id="tabsRow" class="tabs-row" role="tablist" aria-label="Series tabs"></div>
+
+      <!-- inside the card content -->
+      <div class="card-content">
+        <div class="controls">
+          <label class="label" for="trackPicker">Track</label>
+          <select id="trackPicker" aria-label="Select track">
+            <option value="">Select a Track</option>
+          </select>
+          <div id="dateDisplay" class="date-display"></div>
+        </div>
+
+        <main id="boardContainer" class="board">
+          <div id="placeholder" class="placeholder">Select a series tab above, then pick a track.</div>
+        </main>
+      </div>
+    </div>
 
     <footer class="footer">Powered by Apex Times</footer>
   </div>
 
-  <script>
-    // Paste your published CSV link here:
-    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0L2HtZ0QC3ZlIpCwOrzGVQY0cOUDGaQj2DtBNQuqvLKwQ4sLfRmAcb5LG4H9Q3D1CFkilV5QdIwge/pub?output=csv";
-  </script>
+  <!-- sheet mapping configured in script.js (no need to edit HTML) -->
   <script src="script.js"></script>
 </body>
 </html>
