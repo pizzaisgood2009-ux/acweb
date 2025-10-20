@@ -23,6 +23,21 @@ function createTabs() {
     btn.setAttribute('aria-selected', s.label === DEFAULT_TAB ? 'true' : 'false');
     btn.dataset.label = s.label;
 
+    // Adjust tab width dynamically to fit text if needed
+function resizeTabs() {
+  const tabs = document.querySelectorAll('.tab');
+  let maxWidth = 0;
+  tabs.forEach(t => {
+    t.style.width = 'auto';
+    maxWidth = Math.max(maxWidth, t.offsetWidth);
+  });
+  tabs.forEach(t => t.style.width = maxWidth + 'px');
+}
+
+// Call after tabs are created
+resizeTabs();
+window.addEventListener('resize', resizeTabs);
+
     // Logo: local images or emoji for Fun Races
     let logoElement;
     if (s.label === "Fun Races") {
