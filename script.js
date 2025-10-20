@@ -102,14 +102,23 @@ function csvToArray(str){
 function populateDropdown(){
   const sel = $('trackPicker');
   sel.innerHTML = '<option value="">Select Track</option>';
-  const dropdownCol = currentSheet.config.dropdown;
+  const trackCol = currentSheet.config.dropdown; // should always be 'track'
 
-  // Get only unique, non-empty tracks
-  const trackSet = new Set();
-  currentData.forEach(r=>{
-    const val = r[dropdownCol]?.trim();
-    if(val) trackSet.add(val);
+  // Only unique, non-empty track names
+  const tracks = [...new Set(
+    currentData
+      .map(r => r[trackCol]?.trim()) // only the "track" column
+      .filter(t => t && t.length > 0) // exclude empty
+  )];
+
+  tracks.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t;
+    opt.textContent = t;
+    sel.appendChild(opt);
   });
+}
+
 
   // Sort alphabetically (optional)
   const tracks = Array.from(trackSet).sort();
