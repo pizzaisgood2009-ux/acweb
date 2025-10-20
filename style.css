@@ -11,13 +11,13 @@ body {
   background: #222;
   padding: 20px;
   border-radius: 15px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.7);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.8);
 }
 
 #siteTitle {
   font-size: 2.5rem;
-  margin-bottom: 20px;
-  color: #ff4444; /* red accent */
+  margin-bottom: 25px;
+  color: #ff4444;
   text-shadow: 2px 2px #000;
 }
 
@@ -29,7 +29,7 @@ body {
 
 #tabsRow {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
   justify-content: center;
 }
@@ -38,27 +38,34 @@ body {
   background: #333;
   border: 2px solid #555;
   color: #eee;
-  padding: 8px 12px;
+  padding: 10px 16px;
   border-radius: 8px 8px 0 0;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
   font-weight: bold;
-  transition: all 0.2s;
-  min-width: 100px;
+  transition: all 0.2s ease-in-out;
+  min-width: 110px;
+  box-shadow: 0 4px #000;
+}
+
+.tab-logo {
+  width: 24px;
+  height: 24px;
+}
+
+.tab:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px #000;
 }
 
 .tab[aria-selected="true"] {
   background: #ff4444;
   border-color: #ff4444;
   color: #fff;
-  transform: translateY(-2px);
-}
-
-.tab-logo {
-  width: 24px;
-  height: 24px;
+  transform: translateY(-6px);
+  box-shadow: 0 8px #000;
 }
 
 #trackPickerContainer {
@@ -70,7 +77,7 @@ body {
 }
 
 #trackPicker {
-  padding: 5px;
+  padding: 6px 8px;
   border-radius: 6px;
   border: 1px solid #555;
   background: #222;
