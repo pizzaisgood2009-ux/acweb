@@ -1,160 +1,180 @@
+/* General Body */
 body {
-  background: #111;
-  color: #eee;
-  font-family: sans-serif;
   margin: 0;
-  padding: 0;
+  font-family: 'Arial', sans-serif;
+  background-color: #1a1a1a;
+  color: #eee;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
 }
 
-h1#siteTitle {
-  text-align: center;
-  margin-top: 20px;
-  margin-bottom: 30px;
-  color: #ff0000;
-}
-
-.container {
-  max-width: 900px;
-  margin: 0 auto;
-  background: #222;
-  border: 2px solid #ff0000;
-  border-radius: 8px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.7);
+/* Container */
+#mainContainer {
+  background-color: #111;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.8);
   padding: 20px;
+  margin-top: 40px;
+  width: 850px;
+  text-align: center;
   position: relative;
 }
 
-.tabs-row {
+/* Title */
+#title {
+  font-size: 36px;
+  font-weight: bold;
+  color: #ff0000;
+  margin-bottom: 20px;
+  text-align: center;
+  text-shadow: 2px 2px 5px #000;
+}
+
+/* Tabs */
+#tabsRow {
   display: flex;
   justify-content: center;
-  gap: 0;
-  margin-bottom: 0;
-  perspective: 1000px;
+  margin-bottom: 20px;
 }
 
 .tab {
-  background: #222;
+  background-color: #222;
+  border: none;
   color: #eee;
-  border: 2px solid #ff0000;
-  border-bottom: none;
-  padding: 10px 16px;
+  padding: 10px 18px;
+  margin: 0 5px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
   cursor: pointer;
-  border-radius: 8px 8px 0 0;
+  font-size: 16px;
   display: flex;
   align-items: center;
-  gap: 5px;
-  transform: rotateX(0deg);
-  transition: transform 0.3s, background 0.2s;
-  box-shadow: 0 5px 10px rgba(0,0,0,0.7);
+  transition: all 0.3s ease;
   position: relative;
   z-index: 1;
 }
 
-.tab:hover { 
-  transform: rotateX(-5deg) translateY(-2px);
-  background: #330000;
-  z-index: 2;
-}
-
 .tab.active {
-  background: #330000;
-  transform: rotateX(-5deg) translateY(-2px);
-  z-index: 2;
-  box-shadow: 0 8px 14px rgba(0,0,0,0.9);
+  background-color: #330000;
   color: #fff;
+  box-shadow: 0 -5px 15px rgba(255,0,0,0.6);
 }
 
-.tab:first-child { border-radius: 8px 0 0 0; }
-.tab:last-child { border-radius: 0 8px 0 0; }
-
-.tab img.tab-logo { width: 24px; height: 24px; }
-
-.track-picker-container {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin: 10px 0 10px 0;
+.tab-logo {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
 }
 
-#resetTrack {
-  padding: 5px 10px;
-  cursor: pointer;
-  background: #222;
-  color: #eee;
-  border: 2px solid #ff0000;
-  border-radius: 4px;
-}
-
-.race-date {
-  text-align: center;
-  margin-bottom: 15px;
-}
-
-.podium {
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  gap: 20px;
+/* Dropdown */
+#trackPicker {
+  padding: 8px;
+  font-size: 16px;
   margin-bottom: 20px;
-}
-
-.podium .first, .podium .second, .podium .third {
-  width: 120px;
-  text-align: center;
-  color: #111;
-  padding: 10px;
   border-radius: 6px;
+  border: 1px solid #555;
+  background-color: #222;
+  color: #eee;
+}
+
+/* Podium */
+#podiumContainer {
   display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.6);
+  justify-content: center;
+  margin-bottom: 20px;
+  gap: 15px;
 }
 
-.podium .first { background: #FFD700; height: 140px; transform: scale(1.1); }
-.podium .second { background: #C0C0C0; height: 120px; transform: scale(1); }
-.podium .third { background: #CD7F32; height: 110px; transform: scale(0.95); }
-
-.pos-label { font-weight: bold; font-size: 18px; margin-bottom: 5px; }
-.car-name, .winner-name { font-size: 14px; margin-top: 2px; }
-
-#boardContainer {
-  background: #111;
-  border: 2px solid #ff0000;
-  border-radius: 0 0 8px 8px;
-  box-shadow: inset 0 -5px 10px rgba(0,0,0,0.5);
-  padding: 15px;
-  margin-top: -2px;
+.first, .second, .third {
+  width: 120px;
+  border-radius: 8px;
+  background-color: #333;
+  padding: 10px;
+  color: #fff;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  position: relative;
+  transition: all 0.6s ease;
 }
 
+.first {
+  height: 180px;
+  background: linear-gradient(to top, #FFD700, #FFB700);
+}
+.second {
+  height: 150px;
+  background: linear-gradient(to top, #C0C0C0, #A9A9A9);
+}
+.third {
+  height: 120px;
+  background: linear-gradient(to top, #CD7F32, #B87333);
+}
+
+.pos-label {
+  font-weight: bold;
+  font-size: 18px;
+  margin-bottom: 5px;
+}
+
+.winner-name {
+  font-size: 16px;
+  word-break: break-word;
+}
+
+/* Leaderboard Table */
 .leaderboard-table {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 10px;
-  background: #222;
-  color: #eee;
-  border: 2px solid #ff0000;
-  border-radius: 6px;
+  margin-top: 10px;
+  background-color: #222;
+  border-radius: 8px;
   overflow: hidden;
 }
 
 .leaderboard-table th, .leaderboard-table td {
-  border: 1px solid #555;
-  padding: 8px;
-  text-align: center;
+  padding: 10px;
+  border-bottom: 1px solid #444;
 }
 
-.leaderboard-table tbody tr:nth-child(odd) { background: #1a1a1a; }
-.leaderboard-table tbody tr:nth-child(even) { background: #222; }
+.leaderboard-table th {
+  background-color: #330000;
+  color: #fff;
+}
 
-.leaderboard-table tbody tr:hover { background: #330000; cursor: pointer; }
+.leaderboard-table tr.top1 td {
+  background-color: #FFD70033;
+}
 
-.leaderboard .top1 { background: #FFD700; }
-.leaderboard .top2 { background: #C0C0C0; }
-.leaderboard .top3 { background: #CD7F32; }
+.leaderboard-table tr.top2 td {
+  background-color: #C0C0C033;
+}
 
-#boardContainer .placeholder {
-  text-align: center;
+.leaderboard-table tr.top3 td {
+  background-color: #CD7F3233;
+}
+
+/* Stage winners glowing rims for Nascar */
+.leaderboard-table td.glow-pink {
+  box-shadow: 0 0 8px #ff69b4;
+  border-radius: 4px;
+}
+
+.leaderboard-table td.glow-green {
+  box-shadow: 0 0 8px #00ff00;
+  border-radius: 4px;
+}
+
+/* Placeholder text */
+.placeholder {
   color: #888;
-  font-size: 18px;
-  padding: 40px;
+  font-style: italic;
+  margin-top: 20px;
+}
+
+/* Podium animation */
+.first, .second, .third {
+  transform: translateY(50px);
+  opacity: 0;
 }
