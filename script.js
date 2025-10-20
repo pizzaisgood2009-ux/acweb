@@ -22,6 +22,9 @@ sheets.forEach((s,i)=>{
     img.src = s.logo;
     img.className = 'tab-logo';
     tab.appendChild(img);
+    const span = document.createElement('span');
+    span.textContent = " " + s.label;
+    tab.appendChild(span);
   } else {
     tab.textContent = s.logo + " " + s.label;
   }
@@ -116,6 +119,6 @@ function displayLeaderboard(data){
   });
   table.appendChild(tbody);
   board.appendChild(table);
-});
+}
 
 $('resetTrack').addEventListener('click',()=>resetDisplay());
