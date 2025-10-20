@@ -56,12 +56,11 @@ function parseCSV(str) {
   return lines.map(line => {
     const vals = parseCSVLine(line);
     const obj = {};
-    headers.forEach((h,i)=>obj[h]=vals[i]?.trim()||'');
+    headers.forEach((h,i)=>obj[h]=vals[i]?.trim()||'-');
     return obj;
   });
 }
 
-// Handles commas inside quotes
 function parseCSVLine(line){
   const result = [];
   let current = '';
@@ -92,7 +91,9 @@ async function fetchCSV(url){
     const text = await resp.text();
     currentData = parseCSV(text);
     populateTracks();
-    renderLeaderboard(currentData);
+    $('podiumContainer').innerHTML = '';
+    $('boardContainer').innerHTML = '<div class="placeholder">Select a track to view results</div>';
+    $('dateDisplay').textContent = '';
   } catch(err){
     console.error("CSV load error",err);
     $('boardContainer').innerHTML='<div class="placeholder">Error loading data</div>';
@@ -102,48 +103,85 @@ async function fetchCSV(url){
 // ---------- POPULATE TRACK DROPDOWN ----------
 function populateTracks(){
   const picker = $('trackPicker');
-  const current = picker.value;
   if(!currentSheet || !currentData.length) return;
 
-  const tracks = Array.from(new Set(currentData.map(r=>r[currentSheet.trackCol]||'-')));
-  picker.innerHTML = '<option value="">All Tracks</option>';
-  tracks.forEach(t=>{
+  // Unique tracks only
+  const tracks = Array.from(new Set(currentData.map(r => r[currentSheet.trackCol]).filter(t => t && t.trim())));
+  
+  picker.innerHTML = '<option value="">Select Track</option>';
+  tracks.forEach(t => {
     const opt = document.createElement('option');
     opt.value = t;
     opt.textContent = t;
     picker.appendChild(opt);
   });
-  if(tracks.includes(current)) picker.value = current;
 }
 
 // ---------- TRACK CHANGE ----------
 $('trackPicker').addEventListener('change', e=>{
   const track = e.target.value;
-  const filtered = track ? currentData.filter(r=>r[currentSheet.trackCol]===track) : currentData;
+  if(!track){
+    $('podiumContainer').innerHTML = '';
+    $('boardContainer').innerHTML = '<div class="placeholder">Select a track to view results</div>';
+    $('dateDisplay').textContent = '';
+    return;
+  }
+
+  const filtered = currentData.filter(r => r[currentSheet.trackCol] === track);
+  $('dateDisplay').textContent = filtered[0][currentSheet.dateCol] || '-';
   renderLeaderboard(filtered);
-  if(filtered.length) $('dateDisplay').textContent = filtered[0][currentSheet.dateCol]||'-';
 });
 
 // ---------- RENDER LEADERBOARD ----------
 function renderLeaderboard(data){
+  const podium = $('podiumContainer');
   const container = $('boardContainer');
-  if(!data.length){ container.innerHTML='<div class="placeholder">No data yet</div>'; return; }
+  if(!data.length){
+    podium.innerHTML = '';
+    container.innerHTML = '<div class="placeholder">No data for this track</div>';
+    return;
+  }
 
-  // Sort by position if available
+  // Sort by position
   if(currentSheet.positionCol){
     data.sort((a,b)=>parseInt(a[currentSheet.positionCol]||Infinity)-parseInt(b[currentSheet.positionCol]||Infinity));
   }
 
-  let rows = '';
-  data.forEach((r,i)=>{
-    const posClass = i===0?'first-row':i===1?'second-row':i===2?'third-row':'';
-    const pos = i+1;
-    const car = r[currentSheet.carCol]||'-';
-    const winner = r[currentSheet.winnerCol]||'-';
-    rows += `<tr class="${posClass}"><td>${pos}</td><td>${car}</td><td>${winner}</td></tr>`;
-  });
+  // Top 3 pedestal
+  const top3 = data.slice(0,3);
+  podium.innerHTML = `
+    <div class="pedestal second">
+      <div class="pos-label">2</div>
+      <div class="car-name">${top3[1]?top3[1][currentSheet.carCol]:'-'}</div>
+      <div class="winner-name">${top3[1]?top3[1][currentSheet.winnerCol]:'-'}</div>
+    </div>
+    <div class="pedestal first">
+      <div class="pos-label">1</div>
+      <div class="car-name">${top3[0]?top3[0][currentSheet.carCol]:'-'}</div>
+      <div class="winner-name">${top3[0]?top3[0][currentSheet.winnerCol]:'-'}</div>
+    </div>
+    <div class="pedestal third">
+      <div class="pos-label">3</div>
+      <div class="car-name">${top3[2]?top3[2][currentSheet.carCol]:'-'}</div>
+      <div class="winner-name">${top3[2]?top3[2][currentSheet.winnerCol]:'-'}</div>
+    </div>
+  `;
 
-  container.innerHTML = `<div class="table-wrap"><table class="leaderboard-table"><thead><tr><th>Pos</th><th>Car</th><th>Winner</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  // Remaining leaderboard
+  const rows = data.slice(3).map((r,i)=>`
+    <tr>
+      <td>${i+4}</td>
+      <td>${r[currentSheet.carCol]||'-'}</td>
+      <td>${r[currentSheet.winnerCol]||'-'}</td>
+    </tr>
+  `).join('');
+
+  container.innerHTML = `
+    <table class="leaderboard-table">
+      <thead><tr><th>Pos</th><th>Car</th><th>Winner</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
 }
 
 // ---------- TAB AUTO-RESIZE ----------
