@@ -28,8 +28,8 @@ body{
 .title{ 
   font-size:36px; 
   color:var(--accent); 
-  margin:0 0 36px; /* pushed down from top */
-  text-shadow:0 6px 18px rgba(214,40,40,0.14) 
+  margin:0 0 24px;
+  text-align:center;
 }
 
 /* center rectangle */
@@ -41,20 +41,18 @@ body{
   box-shadow: 0 22px 60px rgba(0,0,0,0.65);
   position:relative;
   overflow:visible;
-  padding-top:50px; /* space so tabs don’t overlap title */
+  padding:60px 28px 28px; 
 }
 
 /* folder-style tabs row (centered) */
 .tabs-row{
   display:flex;
+  justify-content:center;
+  flex-wrap: wrap;
   gap:10px;
-  position:absolute;
-  left:50%;
-  top:-36px; 
-  transform:translateX(-50%);
-  z-index:20;
-  align-items:end;
-  padding:0 8px;
+  margin-bottom:20px; /* spacing below tabs */
+  position: relative;
+  z-index: 1;
 }
 
 /* single tab look */
@@ -93,7 +91,7 @@ body{
 
 /* responsive tabs wrap */
 @media (max-width:720px){
-  .tabs-row{ top:-70px; flex-wrap:wrap; gap:8px; width:calc(100% - 20px); left:50%; transform:translateX(-50%); }
+  .tabs-row{ flex-wrap:wrap; gap:8px; width:calc(100% - 20px);}
   .tab{ padding:8px 10px; font-size:14px; min-width:72px }
 }
 
@@ -101,10 +99,10 @@ body{
 .card-content{ padding:44px 28px 28px; }
 
 /* controls */
-.controls{ display:flex; align-items:center; gap:12px; justify-content:center; margin-bottom:18px; }
+.controls{ display:flex; align-items:center; gap:12px; justify-content:center; margin-bottom:18px; flex-wrap:wrap }
 .label{ color:var(--muted); font-size:13px }
 #trackPicker{
-  min-width:320px;
+  min-width:180px;
   padding:10px 12px;
   border-radius:8px;
   background:#0b0b0b;
@@ -119,7 +117,7 @@ body{
 .date-display{ color:var(--muted); font-size:13px }
 
 /* board */
-.board{ width:100%; min-height:280px; display:flex; align-items:center; justify-content:center; padding:12px; border-radius:8px; background: linear-gradient(180deg, rgba(0,0,0,0.02), rgba(255,255,255,0.01)); }
+.board{ width:100%; min-height:300px; display:flex; align-items:flex-start; justify-content:center; padding:12px; border-radius:8px; background: linear-gradient(180deg, rgba(0,0,0,0.02), rgba(255,255,255,0.01)); }
 
 /* placeholder */
 .placeholder{ color:var(--muted); padding:30px; font-size:16px }
@@ -139,9 +137,4 @@ body{
 
 /* second & third */
 .second-row{ background: linear-gradient(180deg, rgba(160,160,160,0.04), rgba(0,0,0,0.02)) }
-.third-row{ background: linear-gradient(180deg, rgba(120,120,120,0.03), rgba(0,0,0,0.02)) }
-
-.leaderboard-table tbody tr:hover{ transform: translateY(-2px); transition: all .15s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.45); }
-
-/* footer */
-.footer{ color:var(--muted); font-size:13px; margin-top:6px }
+.third-row{ background: linear-gradient(180deg, rgba(120,120
