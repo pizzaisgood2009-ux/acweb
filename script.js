@@ -118,28 +118,41 @@ function populateTracks(data){
 $('trackPicker').addEventListener('change',e=>{
   const track = e.target.value;
   const filtered = currentData.filter(r=>r.track===track);
-  renderLeaderboard(filtered,'');
+  renderLeaderboard(filtered);
   if(filtered.length) $('dateDisplay').textContent = filtered[0].date || '';
 });
 
 // ---------- RENDER LEADERBOARD ----------
-function renderLeaderboard(data,label){
+function renderLeaderboard(data){
   const container = $('boardContainer');
   if(!data.length){ container.innerHTML='<div class="placeholder">No data yet</div>'; return;}
-  
-  let rows = '';
-  const hasLap = data[0].fastest_lap !== undefined && data[0].fastest_lap !== '';
+
+  // dynamically detect columns
+  const hasLap = Object.keys(data[0]).includes('fastest_lap') && data[0].fastest_lap !== '';
+  const hasPosition = Object.keys(data[0]).includes('position') && data[0].position !== '';
+
+  // sort if lap exists
   if(hasLap){
     data.sort((a,b)=>{
       const parse = l=>{ const [m,s]=l.split(':'); return parseInt(m)*60 + parseFloat(s) }
       return parse(a.fastest_lap) - parse(b.fastest_lap);
     });
   }
+  // if position exists but not lap, sort by position
+  else if(hasPosition){
+    data.sort((a,b)=>parseInt(a.position||0)-parseInt(b.position||0));
+  }
+
+  let rows = '';
   data.forEach((r,i)=>{
     const posClass = i===0?'first-row':i===1?'second-row':i===2?'third-row':'';
     const pos = i+1;
-    rows+=`<tr class="${posClass}"><td class="pos">${pos}</td><td>${r.car}</td><td>${hasLap?r.fastest_lap:r.position||''}</td><td>${r.race_winner||''}</td></tr>`;
+    const lapOrPos = hasLap ? r.fastest_lap : (hasPosition ? r.position : '');
+    const winner = r.race_winner || '';
+    const car = r.car || '';
+    rows += `<tr class="${posClass}"><td class="pos">${pos}</td><td>${car}</td><td>${lapOrPos}</td><td>${winner}</td></tr>`;
   });
+
   container.innerHTML = `<div class="table-wrap"><table class="leaderboard-table"><thead><tr><th>Pos</th><th>Car</th><th>${hasLap?'Fastest Lap':'Position'}</th><th>Winner</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
