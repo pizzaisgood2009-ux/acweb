@@ -99,11 +99,17 @@ function displayPodium(data){
     const div = document.createElement('div');
     div.className = ['first','second','third'][i];
     let value = data[0][col] || '';
+
+    // Apply glowing rim if configured for stages (Nascar)
     if(currentSheet.config.stages && currentSheet.config.stages[col]){
-      div.style.boxShadow = `0 0 15px ${currentSheet.config.stages[col]}`;
+      const color = currentSheet.config.stages[col];
+      div.style.boxShadow = `0 0 15px ${color}`;
     }
+
     div.innerHTML = `<div class="pos-label">${i+1}</div><div class="winner-name">${value}</div>`;
     podium.appendChild(div);
+
+    // Animate rise
     div.style.transform = 'translateY(50px)';
     div.style.opacity='0';
     setTimeout(()=>{
@@ -118,8 +124,9 @@ function displayTable(data){
   const board = $('boardContainer');
   board.innerHTML='';
   const tableCols = currentSheet.config.table;
+
   if(tableCols==='all'){
-    // Fun Races just display full table
+    // Fun Races: full table
     const headers = Object.keys(data[0]);
     const table = document.createElement('table');
     table.className='leaderboard-table';
@@ -135,16 +142,29 @@ function displayTable(data){
     table.appendChild(tbody);
     board.appendChild(table);
   } else {
-    // Only display specified columns
+    // Specific columns for other sheets
     const table = document.createElement('table');
     table.className='leaderboard-table';
     const thead = document.createElement('thead');
     thead.innerHTML='<tr>'+tableCols.map(h=>`<th>${h}</th>`).join('')+'</tr>';
     table.appendChild(thead);
     const tbody = document.createElement('tbody');
+
     data.forEach(r=>{
       const tr = document.createElement('tr');
-      tr.innerHTML=tableCols.map(h=>`<td>${r[h] || ''}</td>`).join('');
+
+      // Add glow classes for Nascar stage winners dynamically
+      tableCols.forEach(col=>{
+        let td = document.createElement('td');
+        td.textContent = r[col] || '';
+        if(currentSheet.label==='Nascar Cup' && currentSheet.config.stages){
+          for(let stage in currentSheet.config.stages){
+            if(col===stage) td.classList.add(currentSheet.config.stages[stage]==='pink'?'glow-pink':'glow-green');
+          }
+        }
+        tr.appendChild(td);
+      });
+
       tbody.appendChild(tr);
     });
     table.appendChild(tbody);
