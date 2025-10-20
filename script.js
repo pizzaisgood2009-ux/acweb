@@ -11,7 +11,7 @@ const sheets = [
 
 let currentSheet = sheets[0];
 let currentData = [];
-let normalizedHeader = 'track'; // default track column
+let normalizedHeader = 'track';
 
 const tabsRow = $('tabsRow');
 
@@ -91,9 +91,17 @@ $('trackPicker').addEventListener('change', e=>{
   const track = e.target.value;
   if(!track){ resetDisplay(); return; }
   const filtered = currentData.filter(r=>r[normalizedHeader]===track);
-  displayPodium(filtered);
-  displayLeaderboard(filtered);
-  if(filtered[0] && filtered[0]['Date']) $('dateDisplay').textContent = filtered[0]['Date'];
+
+  // Sort winners by order (Winner, 2nd, 3rd, etc.)
+  const sorted = filtered.sort((a,b)=>{
+    const posA = parseInt(a['Position'] || a['Place'] || a['Winner Order'] || '1');
+    const posB = parseInt(b['Position'] || b['Place'] || b['Winner Order'] || '1');
+    return posA - posB;
+  });
+
+  displayPodium(sorted);
+  displayLeaderboard(sorted);
+  if(sorted[0] && sorted[0]['Date']) $('dateDisplay').textContent = sorted[0]['Date'];
 });
 
 function resetDisplay(){
@@ -129,19 +137,22 @@ function displayLeaderboard(data){
   const board = $('boardContainer');
   board.innerHTML = '';
   if(!data.length) { board.innerHTML = '<div class="placeholder">No data</div>'; return; }
+
   const table = document.createElement('table');
   table.className = 'leaderboard-table';
-  const headers = Object.keys(data[0]);
   const thead = document.createElement('thead');
-  thead.innerHTML = '<tr>' + headers.map(h=>`<th>${h}</th>`).join('') + '</tr>';
+  thead.innerHTML = '<tr><th>Position</th><th>Winner</th></tr>';
   table.appendChild(thead);
+
   const tbody = document.createElement('tbody');
   data.forEach((r,i)=>{
     const tr = document.createElement('tr');
     if(i===0) tr.classList.add('top1');
     else if(i===1) tr.classList.add('top2');
     else if(i===2) tr.classList.add('top3');
-    tr.innerHTML = headers.map(h=>`<td>${r[h]}</td>`).join('');
+    const winnerName = r['Winner'] || r['Position'] || r['Car'];
+    const position = i+1;
+    tr.innerHTML = `<td>${position}</td><td>${winnerName}</td>`;
     tbody.appendChild(tr);
   });
   table.appendChild(tbody);
