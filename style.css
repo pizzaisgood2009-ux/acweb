@@ -10,7 +10,7 @@ h1#siteTitle {
   text-align: center;
   margin-top: 20px;
   margin-bottom: 30px;
-  color: #ff0000; /* bright red title */
+  color: #ff0000;
 }
 
 .tabs-row {
@@ -76,9 +76,9 @@ h1#siteTitle {
   box-shadow: 0 4px 8px rgba(0,0,0,0.6);
 }
 
-.podium .first { background: #FFD700; height: 140px; transform: scale(1.1); }   /* gold */
-.podium .second { background: #C0C0C0; height: 120px; transform: scale(1); }  /* silver */
-.podium .third { background: #CD7F32; height: 110px; transform: scale(0.95); } /* bronze */
+.podium .first { background: #FFD700; height: 140px; transform: scale(1.1); }
+.podium .second { background: #C0C0C0; height: 120px; transform: scale(1); }
+.podium .third { background: #CD7F32; height: 110px; transform: scale(0.95); }
 
 .pos-label { font-weight: bold; font-size: 18px; margin-bottom: 5px; }
 .car-name, .winner-name { font-size: 14px; margin-top: 2px; }
