@@ -1,41 +1,14 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Assetto Corsa Times</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <div class="wrap">
+<div id="leaderboardContainer">
+  <h1 id="siteTitle">Assetto Corsa Times</h1>
 
-    <header class="header">
-      <h1 class="title">Assetto Corsa Times</h1>
-    </header>
-
-    <div class="center-card">
-
-      <!-- centered folder-style tabs -->
-      <div id="tabsRow" class="tabs-row" role="tablist" aria-label="Series tabs"></div>
-
-      <div class="card-content">
-        <div class="controls">
-          <label class="label" for="trackPicker">Track</label>
-          <select id="trackPicker" aria-label="Select track">
-            <option value="">Select a Track</option>
-          </select>
-          <div id="dateDisplay" class="date-display"></div>
-        </div>
-
-        <main id="boardContainer" class="board">
-          <div id="placeholder" class="placeholder">Select a series tab above, then pick a track.</div>
-        </main>
-      </div>
-    </div>
-
-    <footer class="footer">Powered by Apex Times</footer>
+  <div id="tabsRowContainer">
+    <div id="tabsRow" role="tablist"></div>
   </div>
 
-  <script src="script.js"></script>
-</body>
-</html>
+  <div id="trackPickerContainer">
+    <select id="trackPicker"></select>
+    <span id="dateDisplay"></span>
+  </div>
+
+  <div id="boardContainer"></div>
+</div>
