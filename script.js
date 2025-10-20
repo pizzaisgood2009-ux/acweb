@@ -23,21 +23,6 @@ function createTabs() {
     btn.setAttribute('aria-selected', s.label === DEFAULT_TAB ? 'true' : 'false');
     btn.dataset.label = s.label;
 
-    // Adjust tab width dynamically to fit text if needed
-function resizeTabs() {
-  const tabs = document.querySelectorAll('.tab');
-  let maxWidth = 0;
-  tabs.forEach(t => {
-    t.style.width = 'auto';
-    maxWidth = Math.max(maxWidth, t.offsetWidth);
-  });
-  tabs.forEach(t => t.style.width = maxWidth + 'px');
-}
-
-// Call after tabs are created
-resizeTabs();
-window.addEventListener('resize', resizeTabs);
-
     // Logo: local images or emoji for Fun Races
     let logoElement;
     if (s.label === "Fun Races") {
@@ -83,14 +68,9 @@ function parseCSVLine(line) {
   let inQuotes = false;
   for (let i = 0; i < line.length; i++) {
     const char = line[i];
-    if (char === '"') {
-      inQuotes = !inQuotes;
-    } else if (char === ',' && !inQuotes) {
-      result.push(current);
-      current = '';
-    } else {
-      current += char;
-    }
+    if (char === '"') inQuotes = !inQuotes;
+    else if (char === ',' && !inQuotes) { result.push(current); current=''; }
+    else current += char;
   }
   result.push(current);
   return result;
@@ -142,18 +122,15 @@ function renderLeaderboard(data){
   const container = $('boardContainer');
   if(!data.length){ container.innerHTML='<div class="placeholder">No data yet</div>'; return;}
 
-  // dynamically detect columns
   const hasLap = Object.keys(data[0]).includes('fastest_lap') && data[0].fastest_lap !== '';
   const hasPosition = Object.keys(data[0]).includes('position') && data[0].position !== '';
 
-  // sort if lap exists
   if(hasLap){
     data.sort((a,b)=>{
       const parse = l=>{ const [m,s]=l.split(':'); return parseInt(m)*60 + parseFloat(s) }
       return parse(a.fastest_lap) - parse(b.fastest_lap);
     });
   }
-  // if position exists but not lap, sort by position
   else if(hasPosition){
     data.sort((a,b)=>parseInt(a.position||0)-parseInt(b.position||0));
   }
@@ -171,9 +148,18 @@ function renderLeaderboard(data){
   container.innerHTML = `<div class="table-wrap"><table class="leaderboard-table"><thead><tr><th>Pos</th><th>Car</th><th>${hasLap?'Fastest Lap':'Position'}</th><th>Winner</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
+// ---------- TAB AUTO-RESIZE ----------
+function resizeTabs() {
+  const tabs = document.querySelectorAll('.tab');
+  let maxWidth = 0;
+  tabs.forEach(t => { t.style.width = 'auto'; maxWidth = Math.max(maxWidth, t.offsetWidth); });
+  tabs.forEach(t => t.style.width = maxWidth + 'px');
+}
+
 // ---------- INIT ----------
 document.addEventListener('DOMContentLoaded', () => {
   createTabs();
   selectTab(DEFAULT_TAB);
-  resizeTabs(); // if using the tab auto-resize tweak
+  resizeTabs();
+  window.addEventListener('resize', resizeTabs);
 });
