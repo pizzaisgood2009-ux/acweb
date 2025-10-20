@@ -1,28 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Assetto Corsa Times</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>Assetto Corsa Times</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div class="container">
+    <!-- Title -->
+    <h1 id="siteTitle">Assetto Corsa Times</h1>
 
-<div id="leaderboardContainer">
-  <h1 id="siteTitle">Assetto Corsa Times</h1>
+    <!-- Tabs (centered above podium & leaderboard) -->
+    <div id="tabsRow" class="tabs-row"></div>
 
-  <div id="tabsRowContainer">
-    <div id="tabsRow" role="tablist"></div>
+    <!-- Track dropdown -->
+    <div class="track-picker-container">
+      <select id="trackPicker">
+        <option value="">Select Track</option>
+      </select>
+    </div>
+
+    <!-- Race date -->
+    <div id="dateDisplay" class="race-date"></div>
+
+    <!-- Podium top 3 -->
+    <div id="podiumContainer" class="podium"></div>
+
+    <!-- Leaderboard table for positions 4+ -->
+    <div id="boardContainer" class="leaderboard">
+      <div class="placeholder">Select a track to view results</div>
+    </div>
   </div>
 
-  <div id="trackPickerContainer">
-    <select id="trackPicker"></select>
-    <span id="dateDisplay"></span>
-  </div>
-
-  <div id="boardContainer"></div>
-</div>
-
-<script src="script.js"></script>
+  <!-- JS -->
+  <script src="script.js"></script>
 </body>
 </html>
