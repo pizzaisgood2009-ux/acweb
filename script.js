@@ -11,6 +11,7 @@ const DEFAULT_TAB = "Fun Races";
 
 function $(id){return document.getElementById(id)}
 
+// ---------- CREATE TABS ----------
 function createTabs() {
   const tabsRow = $('tabsRow');
   tabsRow.innerHTML = '';
@@ -47,6 +48,40 @@ function createTabs() {
   });
 }
 
+// ---------- CSV PARSING ----------
+function parseCSV(str) {
+  const [headerLine, ...lines] = str.split(/\r?\n/).filter(l => l.trim());
+  const headers = headerLine.split(',').map(h => h.trim().toLowerCase().replace(/\s+/g,'_'));
+
+  return lines.map(line => {
+    const vals = parseCSVLine(line);
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = vals[i]?.trim() || '');
+    return obj;
+  });
+}
+
+// Handles commas inside quotes
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      result.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  result.push(current);
+  return result;
+}
+
+// ---------- SELECT TAB ----------
 let currentData = [];
 
 function selectTab(label){
@@ -56,6 +91,7 @@ function selectTab(label){
   });
 }
 
+// ---------- FETCH CSV ----------
 async function fetchCSV(url,label){
   const resp = await fetch(url);
   const text = await resp.text();
@@ -64,17 +100,7 @@ async function fetchCSV(url,label){
   renderLeaderboard(currentData,label);
 }
 
-function parseCSV(str){
-  const [headerLine,...lines] = str.split('\n').filter(l=>l.trim());
-  const headers = headerLine.split(',');
-  return lines.map(line=>{
-    const vals = line.split(',');
-    const obj = {};
-    headers.forEach((h,i)=>obj[h.trim()]=vals[i]?.trim()||'');
-    return obj;
-  });
-}
-
+// ---------- POPULATE TRACK DROPDOWN ----------
 function populateTracks(data){
   const picker = $('trackPicker');
   const current = picker.value;
@@ -88,20 +114,21 @@ function populateTracks(data){
   if(tracks.includes(current)) picker.value=current;
 }
 
+// ---------- TRACK CHANGE ----------
 $('trackPicker').addEventListener('change',e=>{
   const track = e.target.value;
   const filtered = currentData.filter(r=>r.track===track);
   renderLeaderboard(filtered,'');
   if(filtered.length) $('dateDisplay').textContent = filtered[0].date || '';
-})
+});
 
+// ---------- RENDER LEADERBOARD ----------
 function renderLeaderboard(data,label){
   const container = $('boardContainer');
   if(!data.length){ container.innerHTML='<div class="placeholder">No data yet</div>'; return;}
   
   let rows = '';
-  // check if lap column exists
-  const hasLap = data[0].fastest_lap!==undefined;
+  const hasLap = data[0].fastest_lap !== undefined && data[0].fastest_lap !== '';
   if(hasLap){
     data.sort((a,b)=>{
       const parse = l=>{ const [m,s]=l.split(':'); return parseInt(m)*60 + parseFloat(s) }
@@ -111,11 +138,11 @@ function renderLeaderboard(data,label){
   data.forEach((r,i)=>{
     const posClass = i===0?'first-row':i===1?'second-row':i===2?'third-row':'';
     const pos = i+1;
-    rows+=`<tr class="${posClass}"><td class="pos">${pos}</td><td>${r.car}</td><td>${r.fastest_lap||r.position||''}</td><td>${r.race_winner||''}</td></tr>`;
+    rows+=`<tr class="${posClass}"><td class="pos">${pos}</td><td>${r.car}</td><td>${hasLap?r.fastest_lap:r.position||''}</td><td>${r.race_winner||''}</td></tr>`;
   });
   container.innerHTML = `<div class="table-wrap"><table class="leaderboard-table"><thead><tr><th>Pos</th><th>Car</th><th>${hasLap?'Fastest Lap':'Position'}</th><th>Winner</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
-// initialize
+// ---------- INIT ----------
 createTabs();
 selectTab(DEFAULT_TAB);
