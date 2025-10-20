@@ -8,8 +8,9 @@ const SHEETS = [
 ];
 
 const DEFAULT_TAB = "Fun Races";
+let currentData = [];
 
-function $(id){return document.getElementById(id)}
+function $(id){ return document.getElementById(id); }
 
 // ---------- CREATE TABS ----------
 function createTabs() {
@@ -23,7 +24,7 @@ function createTabs() {
     btn.setAttribute('aria-selected', s.label === DEFAULT_TAB ? 'true' : 'false');
     btn.dataset.label = s.label;
 
-    // Logo: local images or emoji for Fun Races
+    // Logo: local images or emoji
     let logoElement;
     if (s.label === "Fun Races") {
       logoElement = document.createElement('span');
@@ -31,8 +32,8 @@ function createTabs() {
       logoElement.style.fontSize = '20px';
     } else {
       logoElement = document.createElement('img');
-      const filename = s.label.toLowerCase().replace(/\s+/g,'_'); 
-      logoElement.src = `img/${filename}.png`; 
+      const filename = s.label.toLowerCase().replace(/\s+/g,'_');
+      logoElement.src = `img/${filename}.png`;
       logoElement.alt = `${s.label} logo`;
       logoElement.className = 'tab-logo';
     }
@@ -77,8 +78,6 @@ function parseCSVLine(line) {
 }
 
 // ---------- SELECT TAB ----------
-let currentData = [];
-
 function selectTab(label){
   SHEETS.forEach(s => s.label === label ? fetchCSV(s.url,label) : null)
   document.querySelectorAll('.tab').forEach(btn => {
@@ -88,31 +87,40 @@ function selectTab(label){
 
 // ---------- FETCH CSV ----------
 async function fetchCSV(url,label){
-  const resp = await fetch(url);
-  const text = await resp.text();
-  currentData = parseCSV(text);
-  populateTracks(currentData);
-  renderLeaderboard(currentData,label);
+  try{
+    const resp = await fetch(url);
+    const text = await resp.text();
+    currentData = parseCSV(text);
+    populateTracks(currentData);
+    renderLeaderboard(currentData,label);
+  }catch(err){
+    console.error("CSV load error",err);
+    $('boardContainer').innerHTML='<div class="placeholder">Error loading data</div>';
+  }
 }
 
 // ---------- POPULATE TRACK DROPDOWN ----------
 function populateTracks(data){
   const picker = $('trackPicker');
   const current = picker.value;
-  const tracks = Array.from(new Set(data.map(r=>r.track))).filter(Boolean);
-  picker.innerHTML = '<option value="">Select a Track</option>';
+
+  const tracks = Array.from(new Set(data.map(r=>r.track || r.Track || '').filter(Boolean)));
+
+  picker.innerHTML = '<option value="">All Tracks</option>';
   tracks.forEach(t=>{
     const opt = document.createElement('option');
-    opt.value=t; opt.textContent=t;
+    opt.value = t;
+    opt.textContent = t;
     picker.appendChild(opt);
   });
-  if(tracks.includes(current)) picker.value=current;
+
+  if(tracks.includes(current)) picker.value = current;
 }
 
 // ---------- TRACK CHANGE ----------
-$('trackPicker').addEventListener('change',e=>{
+$('trackPicker').addEventListener('change', e => {
   const track = e.target.value;
-  const filtered = currentData.filter(r=>r.track===track);
+  const filtered = track ? currentData.filter(r => (r.track || r.Track) === track) : currentData;
   renderLeaderboard(filtered);
   if(filtered.length) $('dateDisplay').textContent = filtered[0].date || '';
 });
@@ -120,29 +128,35 @@ $('trackPicker').addEventListener('change',e=>{
 // ---------- RENDER LEADERBOARD ----------
 function renderLeaderboard(data){
   const container = $('boardContainer');
-  if(!data.length){ container.innerHTML='<div class="placeholder">No data yet</div>'; return;}
+  if(!data.length){ 
+    container.innerHTML='<div class="placeholder">No data yet</div>'; 
+    return;
+  }
 
-  const hasLap = Object.keys(data[0]).includes('fastest_lap') && data[0].fastest_lap !== '';
-  const hasPosition = Object.keys(data[0]).includes('position') && data[0].position !== '';
+  const hasLap = data.some(r => r.fastest_lap && r.fastest_lap.trim() !== '');
+  const hasPosition = data.some(r => r.position && r.position.trim() !== '');
 
   if(hasLap){
     data.sort((a,b)=>{
-      const parse = l=>{ const [m,s]=l.split(':'); return parseInt(m)*60 + parseFloat(s) }
+      const parse = l => { 
+        if(!l) return Infinity; 
+        const [m,s] = l.split(':'); 
+        return parseInt(m)*60 + parseFloat(s) 
+      }
       return parse(a.fastest_lap) - parse(b.fastest_lap);
     });
-  }
-  else if(hasPosition){
-    data.sort((a,b)=>parseInt(a.position||0)-parseInt(b.position||0));
+  } else if(hasPosition){
+    data.sort((a,b)=>parseInt(a.position||Infinity)-parseInt(b.position||Infinity));
   }
 
   let rows = '';
   data.forEach((r,i)=>{
     const posClass = i===0?'first-row':i===1?'second-row':i===2?'third-row':'';
     const pos = i+1;
-    const lapOrPos = hasLap ? r.fastest_lap : (hasPosition ? r.position : '');
-    const winner = r.race_winner || '';
-    const car = r.car || '';
-    rows += `<tr class="${posClass}"><td class="pos">${pos}</td><td>${car}</td><td>${lapOrPos}</td><td>${winner}</td></tr>`;
+    const lapOrPos = hasLap ? r.fastest_lap || '-' : (hasPosition ? r.position || '-' : '-');
+    const winner = r.race_winner || '-';
+    const car = r.car || '-';
+    rows += `<tr class="${posClass}"><td>${pos}</td><td>${car}</td><td>${lapOrPos}</td><td>${winner}</td></tr>`;
   });
 
   container.innerHTML = `<div class="table-wrap"><table class="leaderboard-table"><thead><tr><th>Pos</th><th>Car</th><th>${hasLap?'Fastest Lap':'Position'}</th><th>Winner</th></tr></thead><tbody>${rows}</tbody></table></div>`;
