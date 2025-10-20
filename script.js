@@ -99,16 +99,17 @@ function csvToArray(str){
   });
 }
 
+// Populate dropdown with only unique "track" column values
 function populateDropdown(){
   const sel = $('trackPicker');
   sel.innerHTML = '<option value="">Select Track</option>';
-  const trackCol = currentSheet.config.dropdown; // should always be 'track'
+  const trackCol = currentSheet.config.dropdown; // always "track"
 
-  // Only unique, non-empty track names
+  // Get unique non-empty track names
   const tracks = [...new Set(
     currentData
-      .map(r => r[trackCol]?.trim()) // only the "track" column
-      .filter(t => t && t.length > 0) // exclude empty
+      .map(r => r[trackCol]?.trim())
+      .filter(t => t && t.length > 0)
   )];
 
   tracks.forEach(t => {
@@ -119,33 +120,26 @@ function populateDropdown(){
   });
 }
 
-
-  // Sort alphabetically (optional)
-  const tracks = Array.from(trackSet).sort();
-
-  tracks.forEach(t=>{
-    const opt = document.createElement('option');
-    opt.value = t;
-    opt.textContent = t;
-    sel.appendChild(opt);
-  });
-}
-
-// Dropdown change
-$('trackPicker').addEventListener('change', e=>{
+// Dropdown change event
+$('trackPicker').addEventListener('change', e => {
   const track = e.target.value;
-  if(!track){ resetDisplay(); return; }
-  let filtered = currentData.filter(r=>r[currentSheet.config.dropdown]===track);
+  if (!track) { resetDisplay(); return; }
+
+  // Filter data to only rows with selected track
+  let filtered = currentData.filter(r => r[currentSheet.config.dropdown]?.trim() === track);
 
   // Exclude first for Nascar if configured
-  if(currentSheet.config.excludeFirst) filtered = filtered.filter(r=>r['Race Winner']!=='1');
+  if(currentSheet.config.excludeFirst) {
+    filtered = filtered.filter(r => r['Race Winner'] !== '1');
+  }
 
+  // Display podium and table
   displayPodium(filtered);
   displayTable(filtered);
 });
 
 // Reset podium/table
-function resetDisplay(){
+function resetDisplay() {
   $('podiumContainer').innerHTML = '';
   $('boardContainer').innerHTML = '';
   $('trackPicker').value = '';
@@ -156,12 +150,13 @@ function displayPodium(data){
   const podium = $('podiumContainer');
   podium.innerHTML = '';
   const podiumCols = currentSheet.config.podium;
+
   podiumCols.slice(0,3).forEach((col,i)=>{
     const div = document.createElement('div');
     div.className = ['first','second','third'][i];
-    let value = data[0][col] || '';
+    const value = data[0]?.[col] || '';
 
-    // Apply glowing rim if configured for stages
+    // Apply glowing rim for Nascar stages
     if(currentSheet.config.stages && currentSheet.config.stages[col]){
       const color = currentSheet.config.stages[col];
       div.style.boxShadow = `0 0 15px ${color}`;
@@ -170,30 +165,30 @@ function displayPodium(data){
     div.innerHTML = `<div class="pos-label">${i+1}</div><div class="winner-name">${value}</div>`;
     podium.appendChild(div);
 
-    // Animate rise
+    // Animate podium rise
     div.style.transform = 'translateY(50px)';
-    div.style.opacity='0';
+    div.style.opacity = '0';
     setTimeout(()=>{
-      div.style.transition='all 0.6s ease';
-      div.style.transform='translateY(0)';
-      div.style.opacity='1';
+      div.style.transition = 'all 0.6s ease';
+      div.style.transform = 'translateY(0)';
+      div.style.opacity = '1';
     }, 50*i);
   });
 }
 
-// Display table
+// Display leaderboard table
 function displayTable(data){
   const board = $('boardContainer');
-  board.innerHTML='';
+  board.innerHTML = '';
   const tableCols = currentSheet.config.table;
 
-  if(tableCols==='all'){
-    // Fun Races: full table
-    const headers = Object.keys(data[0]);
+  if(tableCols === 'all'){
+    // Fun Races full table
+    const headers = Object.keys(data[0] || {});
     const table = document.createElement('table');
-    table.className='leaderboard-table';
+    table.className = 'leaderboard-table';
     const thead = document.createElement('thead');
-    thead.innerHTML='<tr>'+headers.map(h=>`<th>${h}</th>`).join('')+'</tr>';
+    thead.innerHTML = '<tr>' + headers.map(h=>`<th>${h}</th>`).join('') + '</tr>';
     table.appendChild(thead);
     const tbody = document.createElement('tbody');
     data.forEach(r=>{
@@ -204,24 +199,22 @@ function displayTable(data){
     table.appendChild(tbody);
     board.appendChild(table);
   } else {
-    // Display specific columns
+    // Specific columns for other sheets
     const table = document.createElement('table');
-    table.className='leaderboard-table';
+    table.className = 'leaderboard-table';
     const thead = document.createElement('thead');
-    thead.innerHTML='<tr>'+tableCols.map(h=>`<th>${h}</th>`).join('')+'</tr>';
+    thead.innerHTML = '<tr>' + tableCols.map(h=>`<th>${h}</th>`).join('') + '</tr>';
     table.appendChild(thead);
     const tbody = document.createElement('tbody');
-
     data.forEach(r=>{
       const tr = document.createElement('tr');
       tableCols.forEach(col=>{
-        let td = document.createElement('td');
+        const td = document.createElement('td');
         td.textContent = r[col] || '';
-
-        // Glowing rims for Nascar Stage winners
-        if(currentSheet.label==='Nascar Cup' && currentSheet.config.stages){
+        // Glowing rims for Nascar stage winners
+        if(currentSheet.label === 'Nascar Cup' && currentSheet.config.stages){
           for(let stage in currentSheet.config.stages){
-            if(col===stage) td.classList.add(currentSheet.config.stages[stage]==='pink'?'glow-pink':'glow-green');
+            if(col === stage) td.classList.add(currentSheet.config.stages[stage] === 'pink' ? 'glow-pink' : 'glow-green');
           }
         }
         tr.appendChild(td);
