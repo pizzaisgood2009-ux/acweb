@@ -1,6 +1,5 @@
 // ---------- CONFIG ----------
-// Add or edit sheet entries here (tab label and published CSV URL)
-// Fun Races is your original sheet (default tab)
+// Add / edit sheet entries here (label and published CSV URL)
 const SHEETS = [
   { label: "Fun Races", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0L2HtZ0QC3ZlIpCwOrzGVQY0cOUDGaQj2DtBNQuqvLKwQ4sLfRmAcb5LG4H9Q3D1CFkilV5QdIwge/pub?output=csv" },
   { label: "Nascar Cup", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSH5c-BTz-ZfoJ3Rf58Q4eU9VBvsdq0XnsA99_qJM2Bvdqaq6Ex033d5gH57SQdcOm6haTNL3xi2Koh/pub?output=csv" },
@@ -10,10 +9,20 @@ const SHEETS = [
   { label: "IMSA LMP2", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3Sq5RbkXrtMKvVPZS8jZGZu_nN4_J7Eddy-7FmV4wo0QnG_YZb5clpx0TiqDT3DN1S56_VagmRp3P/pub?output=csv" }
 ];
 
-// default tab label (must match a label above)
+// default tab label
 const DEFAULT_TAB = "Fun Races";
 
-// cache for fetched sheet data
+// logos (web-hosted). If any URL stops working later, replace it with another hosted copy.
+const LOGOS = {
+  "Fun Races": "https://upload.wikimedia.org/wikipedia/commons/1/16/Flag_racing_checkered.svg",
+  "Nascar Cup": "https://upload.wikimedia.org/wikipedia/en/2/24/NASCAR_logo.svg",
+  "F1": "https://upload.wikimedia.org/wikipedia/en/8/85/Formula_1_Logo.svg",
+  "NTT Indycar": "https://upload.wikimedia.org/wikipedia/commons/4/4f/IndyCar_logo.svg",
+  "IMSA GT3": "https://upload.wikimedia.org/wikipedia/en/6/6a/IMSA_logo.svg",
+  "IMSA LMP2": "https://upload.wikimedia.org/wikipedia/en/6/6a/IMSA_logo.svg"
+};
+
+// ---------- cache ----------
 const sheetCache = {};
 
 // ---------- CSV parser (supports quoted fields) ----------
@@ -45,14 +54,12 @@ function parseCSV(text) {
   return rows;
 }
 
-// safe value helper (show — for empty)
-function valOrDash(v) {
-  if (v === undefined || v === null) return '—';
-  const s = String(v).trim();
-  return s === '' ? '—' : s;
-}
+// ---------- helpers ----------
+function valOrDash(v) { if (v === undefined || v === null) return '—'; const s = String(v).trim(); return s === '' ? '—' : s; }
+function escapeHtml(s) { return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+function $(id) { return document.getElementById(id); }
 
-// convert m:ss.xx or mm:ss.xx to seconds; returns Infinity if invalid
+// parse lap to seconds; return Infinity if not valid
 function lapToSeconds(s) {
   if (!s) return Infinity;
   const str = String(s).trim();
@@ -67,19 +74,53 @@ function lapToSeconds(s) {
   return isNaN(num) ? Infinity : num;
 }
 
-// ---------- UI helpers ----------
-function $(id) { return document.getElementById(id); }
+// detect if any rows have a valid fastest lap
+function sheetHasLap(rows, lapKeys) {
+  return rows.some(r => {
+    for (const k of lapKeys) {
+      if (r[k] && lapToSeconds(r[k]) !== Infinity) return true;
+    }
+    return false;
+  });
+}
 
+// find positional column key (Position/Pos/Place/Finish)
+function findPositionKey(headers) {
+  const keys = headers.map(h => (h||'').toLowerCase());
+  const candidates = ['position','pos','place','placing','finish','result'];
+  for (const c of candidates) {
+    const idx = keys.findIndex(k => k.includes(c));
+    if (idx !== -1) return headers[idx];
+  }
+  return null;
+}
+
+// ---------- UI building ----------
 function createTabs() {
   const tabsRow = $('tabsRow');
   tabsRow.innerHTML = '';
-  SHEETS.forEach((s, idx) => {
+  SHEETS.forEach(s => {
     const btn = document.createElement('button');
     btn.className = 'tab';
-    btn.textContent = s.label;
+    btn.type = 'button';
     btn.setAttribute('role','tab');
     btn.setAttribute('aria-selected', s.label === DEFAULT_TAB ? 'true' : 'false');
     btn.dataset.label = s.label;
+
+    // logo (if available)
+    const logoUrl = LOGOS[s.label];
+    if (logoUrl) {
+      const img = document.createElement('img');
+      img.src = logoUrl;
+      img.alt = `${s.label} logo`;
+      img.loading = 'lazy';
+      btn.appendChild(img);
+    }
+
+    const span = document.createElement('span');
+    span.textContent = s.label;
+    btn.appendChild(span);
+
     btn.addEventListener('click', () => selectTab(s.label));
     tabsRow.appendChild(btn);
   });
@@ -92,12 +133,12 @@ function setActiveTabUI(label) {
   });
 }
 
-// populate track dropdown for current sheet
+// populate track dropdown for a sheet
 function populateTracksForSheet(sheetLabel) {
   const select = $('trackPicker');
   select.innerHTML = '<option value="">Select a Track</option>';
   const rows = sheetCache[sheetLabel] || [];
-  const tracks = Array.from(new Set(rows.map(r => valOrDash(r['Track'] || r['track'] || '—')).filter(t => t !== '—'))).sort();
+  const tracks = Array.from(new Set(rows.map(r => valOrDash(r['Track'] || r['track'] || '')).filter(t => t !== '—'))).sort();
   tracks.forEach(t => {
     const opt = document.createElement('option');
     opt.value = t;
@@ -108,32 +149,60 @@ function populateTracksForSheet(sheetLabel) {
   $('boardContainer').innerHTML = '<div class="placeholder">Select a track to show results.</div>';
 }
 
-// render leaderboard for selected sheet & track
+// render leaderboard for given sheet & track
 function renderLeaderboard(sheetLabel, trackName) {
   const container = $('boardContainer');
   container.innerHTML = '';
-  const rows = (sheetCache[sheetLabel] || []).map(r => {
-    // fallback keys (case-insensitive)
+  const rawRows = sheetCache[sheetLabel] || [];
+  if (!rawRows.length) {
+    container.innerHTML = `<div class="placeholder">No results in ${sheetLabel}.</div>`;
+    $('dateDisplay').textContent = '';
+    return;
+  }
+
+  // normalize rows to consistent keys
+  const headers = Object.keys(rawRows[0] || {});
+  const rowObjs = rawRows.map(r => {
     return {
+      raw: r,
       Track: valOrDash(r['Track'] ?? r['track'] ?? ''),
       Car: valOrDash(r['Car'] ?? r['car'] ?? ''),
       FastestLap: valOrDash(r['Fastest Lap'] ?? r['Fastest lap'] ?? r['Fastest'] ?? r['Lap'] ?? ''),
-      RaceWinner: valOrDash(r['Race Winner'] ?? r['Winner'] ?? r['race winner'] ?? ''),
+      RaceWinner: valOrDash(r['Race Winner'] ?? r['Winner'] ?? r['winner'] ?? ''),
       Date: valOrDash(r['Date'] ?? r['date'] ?? '')
     };
   }).filter(r => r.Track === trackName);
 
-  if (rows.length === 0) {
+  if (rowObjs.length === 0) {
     container.innerHTML = `<div class="placeholder">No results yet for "${trackName}".</div>`;
     $('dateDisplay').textContent = '';
     return;
   }
 
-  // sort by lap seconds (fastest first). rows with invalid times go to bottom.
-  rows.sort((a,b) => lapToSeconds(a.FastestLap) - lapToSeconds(b.FastestLap));
+  // determine sorting method
+  // 1) if any FastestLap parseable -> sort by lap
+  const lapKeys = ['FastestLap','Fastest Lap','Fastest lap','Fastest','Lap'];
+  const hasLap = rowObjs.some(r => lapToSeconds(r.FastestLap) !== Infinity);
 
-  // display date (first non-dash date)
-  const dateVal = rows.find(r => r.Date && r.Date !== '—')?.Date ?? '';
+  // 2) else if sheet has a numeric position column -> sort by that
+  const rawHeaders = Object.keys(rawRows[0] || {});
+  const posKey = findPositionKey(rawHeaders);
+
+  if (hasLap) {
+    rowObjs.sort((a,b) => lapToSeconds(a.FastestLap) - lapToSeconds(b.FastestLap));
+  } else if (posKey) {
+    // build an array with numeric position if possible, else Infinity
+    rowObjs.sort((a,b) => {
+      const aVal = parseInt(a.raw[posKey]) || Infinity;
+      const bVal = parseInt(b.raw[posKey]) || Infinity;
+      return aVal - bVal;
+    });
+  } else {
+    // fallback: keep original order the sheet provided (rowObjs already in sheet order)
+  }
+
+  // show date: prefer first non-dash date in rows
+  const dateVal = rowObjs.find(r => r.Date && r.Date !== '—')?.Date ?? '';
   $('dateDisplay').textContent = dateVal ? `Race Date: ${dateVal}` : '';
 
   // build table
@@ -152,7 +221,7 @@ function renderLeaderboard(sheetLabel, trackName) {
   `;
   const tbody = document.createElement('tbody');
 
-  rows.forEach((r, i) => {
+  rowObjs.forEach((r, i) => {
     const tr = document.createElement('tr');
     if (i === 0) tr.className = 'first-row';
     else if (i === 1) tr.className = 'second-row';
@@ -161,7 +230,7 @@ function renderLeaderboard(sheetLabel, trackName) {
     tr.innerHTML = `
       <td class="pos">${i+1}</td>
       <td>${escapeHtml(r.Car)}</td>
-      <td>${escapeHtml(r.FastestLap)}</td>
+      <td>${escapeHtml(r.FastestLap !== '—' ? r.FastestLap : '—')}</td>
       <td>${escapeHtml(r.RaceWinner)}</td>
       <td>${escapeHtml(r.Date)}</td>
     `;
@@ -175,21 +244,18 @@ function renderLeaderboard(sheetLabel, trackName) {
   container.appendChild(wrap);
 }
 
-function escapeHtml(s) {
-  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
-}
-
-// ---------- fetching sheet CSV and processing ----------
+// ---------- fetching CSV ----------
 async function fetchSheetCSV(sheet) {
-  // if cached, return
   if (sheetCache[sheet.label]) return sheetCache[sheet.label];
-
   try {
     const resp = await fetch(sheet.url, { cache: "no-store" });
     if (!resp.ok) throw new Error(`Fetch failed (${resp.status})`);
     const text = await resp.text();
     const parsed = parseCSV(text).filter(r => r.length > 0);
-    if (parsed.length < 1) return [];
+    if (parsed.length < 1) {
+      sheetCache[sheet.label] = [];
+      return [];
+    }
     const headers = parsed[0].map(h => (h || '').trim());
     const rows = parsed.slice(1).map(r => {
       const obj = {};
@@ -198,7 +264,6 @@ async function fetchSheetCSV(sheet) {
       }
       return obj;
     });
-    // store in cache
     sheetCache[sheet.label] = rows;
     return rows;
   } catch (err) {
@@ -208,35 +273,30 @@ async function fetchSheetCSV(sheet) {
   }
 }
 
-// load a tab (sheet) on demand (and cache)
+// ---------- main tab select ----------
 async function selectTab(label) {
   setActiveTabUI(label);
-  // find sheet config
   const sheet = SHEETS.find(s => s.label === label);
   if (!sheet) return;
-  // fetch if needed
   await fetchSheetCSV(sheet);
   populateTracksForSheet(label);
-  // default dropdown to Select a Track (user wanted blank select by default)
   $('trackPicker').value = '';
-  // placeholder
   $('boardContainer').innerHTML = '<div class="placeholder">Select a track to show results.</div>';
 }
 
 // ---------- wiring ----------
 document.addEventListener('DOMContentLoaded', async () => {
-  // build tabs UI
   createTabs();
 
-  // Wire track picker change
-  const trackPicker = document.getElementById('trackPicker');
+  // wire track picker
+  const trackPicker = $('trackPicker');
   trackPicker.addEventListener('change', (e) => {
     const track = e.target.value;
     const activeTab = Array.from(document.querySelectorAll('.tab')).find(b => b.getAttribute('aria-selected') === 'true');
     const label = activeTab ? activeTab.dataset.label : DEFAULT_TAB;
     if (!track) {
-      document.getElementById('boardContainer').innerHTML = '<div class="placeholder">Select a track to show results.</div>';
-      document.getElementById('dateDisplay').textContent = '';
+      $('boardContainer').innerHTML = '<div class="placeholder">Select a track to show results.</div>';
+      $('dateDisplay').textContent = '';
       return;
     }
     renderLeaderboard(label, track);
@@ -244,7 +304,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // initialize default tab
   const initial = SHEETS.find(s => s.label === DEFAULT_TAB) ? DEFAULT_TAB : SHEETS[0].label;
-  // prefetch default tab data and select it
   await fetchSheetCSV(SHEETS.find(s => s.label === initial));
   selectTab(initial);
 });
