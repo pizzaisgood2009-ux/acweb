@@ -11,9 +11,11 @@ const sheets = [
 
 let currentSheet = sheets[0];
 let currentData = [];
+let normalizedHeader = 'track'; // default track column
+
+const tabsRow = $('tabsRow');
 
 // Create tabs
-const tabsRow = $('tabsRow');
 sheets.forEach((s,i)=>{
   const tab = document.createElement('button');
   tab.className = 'tab';
@@ -39,7 +41,7 @@ sheets.forEach((s,i)=>{
   tabsRow.appendChild(tab);
 });
 
-// Load initial sheet and set first tab active
+// Load initial sheet
 loadSheet(0);
 tabsRow.children[0].classList.add('active');
 
@@ -49,6 +51,7 @@ function loadSheet(idx){
     .then(res=>res.text())
     .then(csv=>{
       currentData = csvToArray(csv);
+      detectTrackHeader();
       populateDropdown();
       resetDisplay();
     });
@@ -56,19 +59,26 @@ function loadSheet(idx){
 
 function csvToArray(str){
   const lines = str.trim().split('\n');
-  const headers = lines[0].split(',');
+  const headers = lines[0].split(',').map(h=>h.trim().toLowerCase());
   return lines.slice(1).map(l=>{
     const values = l.split(',');
     let obj = {};
-    headers.forEach((h,i)=>obj[h.trim()] = values[i] ? values[i].trim() : '');
+    headers.forEach((h,i)=>obj[h]=values[i] ? values[i].trim() : '');
     return obj;
   });
+}
+
+function detectTrackHeader(){
+  const possible = ['track','tracks','race track','race'];
+  const keys = Object.keys(currentData[0] || {});
+  const found = keys.find(k => possible.includes(k.toLowerCase()));
+  normalizedHeader = found || 'track';
 }
 
 function populateDropdown(){
   const sel = $('trackPicker');
   sel.innerHTML = '<option value="">Select Track</option>';
-  const tracks = [...new Set(currentData.map(r=>r['Track']))];
+  const tracks = [...new Set(currentData.map(r=>r[normalizedHeader]).filter(t=>t))];
   tracks.forEach(t=>{
     const opt = document.createElement('option');
     opt.value = t;
@@ -80,7 +90,7 @@ function populateDropdown(){
 $('trackPicker').addEventListener('change', e=>{
   const track = e.target.value;
   if(!track){ resetDisplay(); return; }
-  const filtered = currentData.filter(r=>r['Track']===track);
+  const filtered = currentData.filter(r=>r[normalizedHeader]===track);
   displayPodium(filtered);
   displayLeaderboard(filtered);
   if(filtered[0] && filtered[0]['Date']) $('dateDisplay').textContent = filtered[0]['Date'];
@@ -104,12 +114,21 @@ function displayPodium(data){
     div.innerHTML = `<div class="pos-label">${i+1}</div>
                      <div class="winner-name">${r['Winner'] || r['Position'] || r['Car']}</div>`;
     podium.appendChild(div);
+    // Animate rise
+    div.style.transform = 'translateY(50px)';
+    div.style.opacity = '0';
+    setTimeout(()=>{
+      div.style.transition = 'all 0.6s ease';
+      div.style.transform = 'translateY(0)';
+      div.style.opacity = '1';
+    }, 50*i);
   });
 }
 
 function displayLeaderboard(data){
   const board = $('boardContainer');
   board.innerHTML = '';
+  if(!data.length) { board.innerHTML = '<div class="placeholder">No data</div>'; return; }
   const table = document.createElement('table');
   table.className = 'leaderboard-table';
   const headers = Object.keys(data[0]);
