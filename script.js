@@ -1,7 +1,5 @@
-// Shortcut for getElementById
 const $ = id => document.getElementById(id);
 
-// Sheet definitions
 const sheets = [
   { label: "Fun Races", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0L2HtZ0QC3ZlIpCwOrzGVQY0cOUDGaQj2DtBNQuqvLKwQ4sLfRmAcb5LG4H9Q3D1CFkilV5QdIwge/pub?output=csv", logo: "🏁" },
   { label: "F1", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSSQ9Zn5aGGooGR9EuRmmMW-08_hlcYR7uB3_au3_tD94jialyB8c_olGXYpQvhf2nMnw7Yd-10IVDu/pub?output=csv", logo: "img/f1.png" },
@@ -128,22 +126,3 @@ function displayLeaderboard(data){
 
 // Reset button
 $('resetTrack').addEventListener('click',()=>resetDisplay());
-
-// Export CSV
-$('exportCSV').addEventListener('click',()=>{
-  if(!currentData.length) return alert("No data to export.");
-  const track = $('trackPicker').value;
-  const filtered = track ? currentData.filter(r=>r['Track']===track) : currentData;
-  const headers = Object.keys(filtered[0]);
-  const csvRows = [headers.join(',')];
-  filtered.forEach(r=>{
-    csvRows.push(headers.map(h=>r[h]).join(','));
-  });
-  const blob = new Blob([csvRows.join('\n')], {type:'text/csv'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${currentSheet.label.replace(/\s+/g,'_')}_${track||'all'}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-});
