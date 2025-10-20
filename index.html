@@ -10,14 +10,15 @@
     <!-- Title -->
     <h1 id="siteTitle">Assetto Corsa Times</h1>
 
-    <!-- Tabs (centered above podium & leaderboard) -->
+    <!-- Tabs -->
     <div id="tabsRow" class="tabs-row"></div>
 
-    <!-- Track dropdown -->
+    <!-- Track dropdown + reset -->
     <div class="track-picker-container">
       <select id="trackPicker">
         <option value="">Select Track</option>
       </select>
+      <button id="resetTrack">Reset</button>
     </div>
 
     <!-- Race date -->
@@ -26,10 +27,13 @@
     <!-- Podium top 3 -->
     <div id="podiumContainer" class="podium"></div>
 
-    <!-- Leaderboard table for positions 4+ -->
+    <!-- Leaderboard table -->
     <div id="boardContainer" class="leaderboard">
       <div class="placeholder">Select a track to view results</div>
     </div>
+
+    <!-- Export leaderboard -->
+    <button id="exportCSV">Export CSV</button>
   </div>
 
   <!-- JS -->
