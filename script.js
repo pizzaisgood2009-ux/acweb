@@ -12,7 +12,7 @@ const sheets = [
 let currentSheet = sheets[0];
 let currentData = [];
 
-// Initialize tabs
+// Create tabs
 const tabsRow = $('tabsRow');
 sheets.forEach((s,i)=>{
   const tab = document.createElement('button');
@@ -43,7 +43,6 @@ function loadSheet(idx){
     });
 }
 
-// CSV parser
 function csvToArray(str){
   const lines = str.trim().split('\n');
   const headers = lines[0].split(',');
@@ -55,7 +54,6 @@ function csvToArray(str){
   });
 }
 
-// Populate track dropdown
 function populateDropdown(){
   const sel = $('trackPicker');
   sel.innerHTML = '<option value="">Select Track</option>';
@@ -68,7 +66,6 @@ function populateDropdown(){
   });
 }
 
-// On track select
 $('trackPicker').addEventListener('change', e=>{
   const track = e.target.value;
   if(!track){ resetDisplay(); return; }
@@ -78,7 +75,6 @@ $('trackPicker').addEventListener('change', e=>{
   if(filtered[0] && filtered[0]['Date']) $('dateDisplay').textContent = filtered[0]['Date'];
 });
 
-// Reset display
 function resetDisplay(){
   $('podiumContainer').innerHTML = '';
   $('boardContainer').innerHTML = '<div class="placeholder">Select a track to view results</div>';
@@ -86,7 +82,6 @@ function resetDisplay(){
   $('trackPicker').value = '';
 }
 
-// Display podium top 3
 function displayPodium(data){
   const podium = $('podiumContainer');
   podium.innerHTML = '';
@@ -96,12 +91,11 @@ function displayPodium(data){
     const div = document.createElement('div');
     div.className = positions[i];
     div.innerHTML = `<div class="pos-label">${i+1}</div>
-                     <div class="winner-name">${r['Winner'] || r['Position']}</div>`;
+                     <div class="winner-name">${r['Winner'] || r['Position'] || r['Car']}</div>`;
     podium.appendChild(div);
   });
 }
 
-// Display leaderboard
 function displayLeaderboard(data){
   const board = $('boardContainer');
   board.innerHTML = '';
@@ -122,7 +116,6 @@ function displayLeaderboard(data){
   });
   table.appendChild(tbody);
   board.appendChild(table);
-}
+});
 
-// Reset button
 $('resetTrack').addEventListener('click',()=>resetDisplay());
