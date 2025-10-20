@@ -17,6 +17,7 @@ const tabsRow = $('tabsRow');
 sheets.forEach((s,i)=>{
   const tab = document.createElement('button');
   tab.className = 'tab';
+  
   if(s.logo.startsWith("img")) {
     const img = document.createElement('img');
     img.src = s.logo;
@@ -28,12 +29,19 @@ sheets.forEach((s,i)=>{
   } else {
     tab.textContent = s.logo + " " + s.label;
   }
-  tab.addEventListener('click',()=>loadSheet(i));
+
+  tab.addEventListener('click',()=>{
+    loadSheet(i);
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+  });
+
   tabsRow.appendChild(tab);
 });
 
-// Load initial sheet
+// Load initial sheet and set first tab active
 loadSheet(0);
+tabsRow.children[0].classList.add('active');
 
 function loadSheet(idx){
   currentSheet = sheets[idx];
