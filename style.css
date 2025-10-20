@@ -26,7 +26,6 @@ body{
 /* header */
 .header{text-align:center}
 .title{ font-size:36px; color:var(--accent); margin:0 0 6px; text-shadow:0 6px 18px rgba(214,40,40,0.14) }
-.subtitle{ margin:0; color:var(--muted); font-size:13px; letter-spacing:0.08em }
 
 /* center rectangle */
 .center-card{
@@ -39,21 +38,27 @@ body{
   overflow:visible;
 }
 
-/* folder-style tabs row (sticks out from top) */
+/* folder-style tabs row (centered) */
 .tabs-row{
   display:flex;
   gap:10px;
   position:absolute;
-  left:20px;
-  top:-34px; /* pulls tabs out of the top */
+  left:50%;
+  top:-36px; /* pulls tabs out of the top */
+  transform:translateX(-50%);
   z-index:20;
+  align-items:end;
+  padding:0 8px;
 }
 
 /* single tab look */
 .tab {
+  display:flex;
+  align-items:center;
+  gap:8px;
   background: linear-gradient(180deg,#131313,#0b0b0b);
   color:#fff;
-  padding:8px 18px;
+  padding:8px 14px;
   border-radius:10px 10px 6px 6px;
   border:1px solid rgba(255,255,255,0.06);
   box-shadow: 0 12px 30px rgba(0,0,0,0.6), 0 4px 12px rgba(214,40,40,0.05) inset;
@@ -62,6 +67,17 @@ body{
   transform-origin:center bottom;
   transition: transform .12s ease, box-shadow .12s ease;
   letter-spacing:0.02em;
+  white-space:nowrap;
+  min-width:80px;
+  max-width:220px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.tab img {
+  width:20px;
+  height:20px;
+  object-fit:contain;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
 }
 .tab[aria-selected="true"]{
   background: linear-gradient(180deg,#241212,#1a0f0f);
@@ -70,10 +86,10 @@ body{
   box-shadow: 0 18px 40px rgba(0,0,0,0.6), 0 6px 22px rgba(214,40,40,0.08);
 }
 
-/* small screens: make tabs wrap */
+/* responsive tabs wrap */
 @media (max-width:720px){
-  .tabs-row{ left:10px; top:-60px; flex-wrap:wrap; gap:8px; width:calc(100% - 20px) }
-  .tab{ padding:8px 12px; font-size:14px }
+  .tabs-row{ top:-70px; flex-wrap:wrap; gap:8px; width:calc(100% - 20px); left:50%; transform:translateX(-50%); }
+  .tab{ padding:8px 10px; font-size:14px; min-width:72px }
 }
 
 /* inside card content */
