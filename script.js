@@ -99,14 +99,21 @@ function csvToArray(str){
   });
 }
 
-// Populate dropdown with only unique track names
 function populateDropdown(){
   const sel = $('trackPicker');
   sel.innerHTML = '<option value="">Select Track</option>';
   const dropdownCol = currentSheet.config.dropdown;
-  const tracks = [...new Set(
-    currentData.map(r => r[dropdownCol]?.trim()).filter(t=>t && t.length>0)
-  )];
+
+  // Get only unique, non-empty tracks
+  const trackSet = new Set();
+  currentData.forEach(r=>{
+    const val = r[dropdownCol]?.trim();
+    if(val) trackSet.add(val);
+  });
+
+  // Sort alphabetically (optional)
+  const tracks = Array.from(trackSet).sort();
+
   tracks.forEach(t=>{
     const opt = document.createElement('option');
     opt.value = t;
