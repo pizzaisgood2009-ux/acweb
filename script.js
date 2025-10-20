@@ -172,5 +172,8 @@ function renderLeaderboard(data){
 }
 
 // ---------- INIT ----------
-createTabs();
-selectTab(DEFAULT_TAB);
+document.addEventListener('DOMContentLoaded', () => {
+  createTabs();
+  selectTab(DEFAULT_TAB);
+  resizeTabs(); // if using the tab auto-resize tweak
+});
