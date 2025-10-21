@@ -1,180 +1,275 @@
+/* script.js - final integrated file
+   - Uses PapaParse to reliably fetch Google Sheets CSV
+   - Dropdown uses only "track" column (case-insensitive)
+   - Per-sheet config drives podium/table columns
+   - Nascar stage glow applied via class names
+*/
+
 const $ = id => document.getElementById(id);
 
-// Sheet configurations
+/* === sheet configs ===
+   update URLs if you replace sheets; logos use img/*.png or emoji
+*/
 const sheets = [
-  { label:"Fun Races", url:"https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0L2HtZ0QC3ZlIpCwOrzGVQY0cOUDGaQj2DtBNQuqvLKwQ4sLfRmAcb5LG4H9Q3D1CFkilV5QdIwge/pub?output=csv", logo:"🏁", config:{dropdown:'track', podium:[], table:'all'} },
-  { label:"F1", url:"https://docs.google.com/spreadsheets/d/e/2PACX-1vSSQ9Zn5aGGooGR9EuRmmMW-08_hlcYR7uB3_au3_tD94jialyB8c_olGXYpQvhf2nMnw7Yd-10IVDu/pub?output=csv", logo:"img/f1.png", config:{dropdown:'track', podium:['Winner','2nd Place','3rd Place'], table:['4th Place']}},
-  { label:"Nascar Cup", url:"https://docs.google.com/spreadsheets/d/e/2PACX-1vSH5c-BTz-ZfoJ3Rf58Q4eU9VBvsdq0XnsA99_qJM2Bvdqaq6Ex033d5gH57SQdcOm6haTNL3xi2Koh/pub?output=csv", logo:"img/nascar_cup.png", config:{dropdown:'track', podium:['Race Winner','2nd Place','3rd Place'], table:['4th Place'], stages:{'Stage 1 Winner':'pink','Stage 2 Winner':'green'}, excludeFirst:true}},
-  { label:"NTT Indycar", url:"https://docs.google.com/spreadsheets/d/e/2PACX-1vT7Gfb8BPrv0HhxptUTq6pJmjVHSYIriySGawJa5iNwV_Wz_aj_xs1SHLIZU2RCxgQErF1eXnEBkUQv/pub?output=csv", logo:"img/ntt_indycar.png", config:{dropdown:'track', podium:['Winner','2nd Place','3rd Place'], table:[]}},
-  { label:"IMSA GT3", url:"https://docs.google.com/spreadsheets/d/e/2PACX-1vTcbp-Zy1fdIUZxUre2UFF7ibRCTscw1tMQ0G91rdDbTDmjKH8-MF-y1H3tJJEZxXLELIi0r_5zchBV/pub?output=csv", logo:"img/imsa_gt3.png", config:{dropdown:'track', podium:['Winner','2nd Place','3rd Place'], table:['4th Place']}},
-  { label:"IMSA LMP2", url:"https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3Sq5RbkXrtMKvVPZS8jZGZu_nN4_J7Eddy-7FmV4wo0QnG_YZb5clpx0TiqDT3DN1S56_VagmRp3P/pub?output=csv", logo:"img/imsa_lmp2.png", config:{dropdown:'track', podium:['Winner','2nd Place','3rd Place'], table:['4th Place']}}
+  { label:"Fun Races", url:"https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0L2HtZ0QC3ZlIpCwOrzGVQY0cOUDGaQj2DtBNQuqvLKwQ4sLfRmAcb5LG4H9Q3D1CFkilV5QdIwge/pub?output=csv", logo:"🏁", config:{ dropdown:'track', podium:[], table:'all' } },
+  { label:"F1", url:"https://docs.google.com/spreadsheets/d/e/2PACX-1vSSQ9Zn5aGGooGR9EuRmmMW-08_hlcYR7uB3_au3_tD94jialyB8c_olGXYpQvhf2nMnw7Yd-10IVDu/pub?output=csv", logo:"img/f1.png", config:{ dropdown:'track', podium:['Winner','2nd Place','3rd Place'], table:['4th Place'] } },
+  { label:"Nascar Cup", url:"https://docs.google.com/spreadsheets/d/e/2PACX-1vSH5c-BTz-ZfoJ3Rf58Q4eU9VBvsdq0XnsA99_qJM2Bvdqaq6Ex033d5gH57SQdcOm6haTNL3xi2Koh/pub?output=csv", logo:"img/nascar_cup.png", config:{ dropdown:'track', podium:['Race Winner','2nd Place','3rd Place'], table:['4th Place'], stages:{ 'Stage 1 Winner':'pink','Stage 2 Winner':'green' }, excludeFirst:false } },
+  { label:"NTT Indycar", url:"https://docs.google.com/spreadsheets/d/e/2PACX-1vT7Gfb8BPrv0HhxptUTq6pJmjVHSYIriySGawJa5iNwV_Wz_aj_xs1SHLIZU2RCxgQErF1eXnEBkUQv/pub?output=csv", logo:"img/ntt_indycar.png", config:{ dropdown:'track', podium:['Winner','2nd Place','3rd Place'], table:[] } },
+  { label:"IMSA GT3", url:"https://docs.google.com/spreadsheets/d/e/2PACX-1vTcbp-Zy1fdIUZxUre2UFF7ibRCTscw1tMQ0G91rdDbTDmjKH8-MF-y1H3tJJEZxXLELIi0r_5zchBV/pub?output=csv", logo:"img/imsa_gt3.png", config:{ dropdown:'track', podium:['Winner','2nd Place','3rd Place'], table:['4th Place'] } },
+  { label:"IMSA LMP2", url:"https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3Sq5RbkXrtMKvVPZS8jZGZu_nN4_J7Eddy-7FmV4wo0QnG_YZb5clpx0TiqDT3DN1S56_VagmRp3P/pub?output=csv", logo:"img/imsa_lmp2.png", config:{ dropdown:'track', podium:['Winner','2nd Place','3rd Place'], table:['4th Place'] } }
 ];
 
 let currentSheet = sheets[0];
 let currentData = [];
 
-// Create Tabs
+// build tabs
 const tabsRow = $('tabsRow');
-sheets.forEach((s,i)=>{
-  const tab = document.createElement('button');
-  tab.className = 'tab';
-  if(s.logo.startsWith("img")){
-    const img = document.createElement('img');
-    img.src = s.logo;
-    img.className='tab-logo';
-    tab.appendChild(img);
-    const span = document.createElement('span');
-    span.textContent = " " + s.label;
-    tab.appendChild(span);
-  } else tab.textContent = s.logo + " " + s.label;
-
-  tab.addEventListener('click',()=>{
-    loadSheet(i);
-    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-    tab.classList.add('active');
+sheets.forEach((s, idx)=>{
+  const btn = document.createElement('button');
+  btn.className = 'tab';
+  if(s.logo.startsWith('img')){
+    const img = document.createElement('img'); img.src = s.logo; img.className='tab-logo'; btn.appendChild(img);
+    const span = document.createElement('span'); span.textContent = " " + s.label; btn.appendChild(span);
+  } else {
+    btn.textContent = s.logo + " " + s.label;
+  }
+  btn.addEventListener('click', ()=>{
+    setActiveTab(idx, btn);
+    loadSheet(idx);
   });
-  tabsRow.appendChild(tab);
+  tabsRow.appendChild(btn);
 });
 
-// Initial load
-loadSheet(0);
-tabsRow.children[0].classList.add('active');
+// set first tab active
+if(tabsRow.children[0]) tabsRow.children[0].classList.add('active');
 
-// Load CSV sheet
-function loadSheet(idx){
-  currentSheet = sheets[idx];
-  fetch(currentSheet.url)
-    .then(res=>res.text())
-    .then(csv=>{
-      currentData = csvToArray(csv);
-      populateDropdown();
-      resetDisplay();
-    });
+// helper: set active class
+function setActiveTab(idx, clickedBtn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  clickedBtn.classList.add('active');
 }
 
-// CSV to array of objects
-function csvToArray(str){
-  const lines = str.trim().split('\n');
-  const headers = lines[0].split(',').map(h=>h.trim());
-  return lines.slice(1).map(l=>{
-    const values = l.split(',');
-    let obj = {};
-    headers.forEach((h,i)=>obj[h]=values[i]?values[i].trim():'');
-    return obj;
+// load sheet with PapaParse
+function loadSheet(idx){
+  currentSheet = sheets[idx];
+  // show loading placeholder
+  $('boardContainer').innerHTML = '<div class="placeholder">Loading...</div>';
+  $('podiumContainer').innerHTML = '';
+  $('trackPicker').innerHTML = '<option value="">Loading tracks…</option>';
+  Papa.parse(currentSheet.url, {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
+    complete: function(results){
+      currentData = results.data || [];
+      normalizeRows();
+      populateDropdown();
+      resetDisplay();
+    },
+    error: function(err){
+      console.error('CSV load error', err);
+      $('boardContainer').innerHTML = '<div class="placeholder">Error loading sheet</div>';
+    }
   });
 }
 
-// Populate dropdown: only unique "track" column
+// normalize keys: trim whitespace from keys for safety (map to trimmed keys)
+function normalizeRows(){
+  if(!currentData.length) return;
+  const normalized = [];
+  currentData.forEach(row=>{
+    const nr = {};
+    Object.keys(row).forEach(k=>{
+      const key = String(k).trim();
+      nr[key] = row[k] === undefined || row[k] === null ? '' : String(row[k]).trim();
+    });
+    normalized.push(nr);
+  });
+  currentData = normalized;
+}
+
+// Only unique, non-empty track values in dropdown (exactly from dropdown config)
 function populateDropdown(){
   const sel = $('trackPicker');
   sel.innerHTML = '<option value="">Select Track</option>';
   const trackCol = currentSheet.config.dropdown;
-
-  const tracks = [...new Set(
-    currentData.map(r=>r[trackCol]?.trim()).filter(t=>t && t.length>0)
-  )].sort();
-
+  const set = new Set();
+  currentData.forEach(r=>{
+    const v = r[trackCol];
+    if(v && v.toString().trim()) set.add(v.toString().trim());
+  });
+  const tracks = Array.from(set).sort();
   tracks.forEach(t=>{
-    const opt = document.createElement('option');
-    opt.value=t;
-    opt.textContent=t;
-    sel.appendChild(opt);
+    const o = document.createElement('option');
+    o.value = t; o.textContent = t;
+    sel.appendChild(o);
   });
 }
 
-// Dropdown change
-$('trackPicker').addEventListener('change', e=>{
+// on track change
+$('trackPicker').addEventListener('change', (e)=>{
   const track = e.target.value;
   if(!track){ resetDisplay(); return; }
-
-  let filtered = currentData.filter(r=>r[currentSheet.config.dropdown]?.trim()===track);
-
-  if(currentSheet.config.excludeFirst) filtered = filtered.filter(r=>r['Race Winner']!=='1');
-
+  let filtered = currentData.filter(r => (r[currentSheet.config.dropdown] || '').toString().trim() === track);
+  // if Nascar excludeFirst behavior set (config) - previously user wanted to "exclude number ones if possible" - handle if flag true
+  if(currentSheet.config.excludeFirst){
+    filtered = filtered.filter(r => (r['Position'] || r['Pos'] || r['Race Winner'] || '').toString().trim() !== '1');
+  }
+  // Sort by position if a position column exists
+  filtered = sortByPositionIfPresent(filtered);
   displayPodium(filtered);
   displayTable(filtered);
+  // date show
+  const dateKeys = ['Date','date','Race Date','race_date'];
+  const row0 = filtered[0] || {};
+  for(const k of dateKeys){ if(row0[k]){ $('dateDisplay').textContent = row0[k]; break; } }
 });
 
-// Reset display
+// reset
+$('resetTrack').addEventListener('click', resetDisplay);
 function resetDisplay(){
-  $('podiumContainer').innerHTML='';
-  $('boardContainer').innerHTML='';
-  $('trackPicker').value='';
+  $('podiumContainer').innerHTML = '';
+  $('boardContainer').innerHTML = '<div class="placeholder">Select a track to view results</div>';
+  $('trackPicker').value = '';
+  $('dateDisplay').textContent = '';
 }
 
-// Podium display
-function displayPodium(data){
-  const podium = $('podiumContainer');
-  podium.innerHTML='';
-  const podiumCols = currentSheet.config.podium;
-
-  podiumCols.slice(0,3).forEach((col,i)=>{
-    const div = document.createElement('div');
-    div.className=['first','second','third'][i];
-    const value = data[0]?.[col] || '';
-
-    if(currentSheet.config.stages && currentSheet.config.stages[col]){
-      const color = currentSheet.config.stages[col];
-      div.style.boxShadow=`0 0 15px ${color}`;
-    }
-
-    div.innerHTML=`<div class="pos-label">${i+1}</div><div class="winner-name">${value}</div>`;
-    podium.appendChild(div);
-
-    div.style.transform='translateY(50px)';
-    div.style.opacity='0';
-    setTimeout(()=>{
-      div.style.transition='all 0.6s ease';
-      div.style.transform='translateY(0)';
-      div.style.opacity='1';
-    },50*i);
+// sort by any position-like column if present
+function sortByPositionIfPresent(rows){
+  if(!rows.length) return rows;
+  const posCandidates = ['Position','position','Pos','pos','Place','place','Finish','finish'];
+  const keys = Object.keys(rows[0]);
+  const posKey = keys.find(k => posCandidates.map(x=>x.toLowerCase()).includes(k.toLowerCase()));
+  if(!posKey) return rows;
+  return rows.slice().sort((a,b)=>{
+    const va = parseInt(a[posKey]) || Infinity;
+    const vb = parseInt(b[posKey]) || Infinity;
+    return va - vb;
   });
 }
 
-// Table display
+// display podium (uses config.podium column names)
+function displayPodium(data){
+  const podium = $('podiumContainer'); podium.innerHTML = '';
+  const pCols = currentSheet.config.podium || [];
+  // if no podium config -> no podium (e.g., Fun Races)
+  if(!pCols.length) return;
+
+  // build top3 values from the filtered data using the column names in config
+  const top3 = [];
+  for(let i=0;i<3;i++){
+    // for each podium column, try to resolve column name in actual row keys (case-insensitive)
+    const col = pCols[i];
+    const val = data[0] ? findValueInRow(data[0], col) : '';
+    top3.push(val || '');
+  }
+
+  // create elements: second, first, third (left, center, right)
+  const order = [1,0,2]; // second, first, third DOM order
+  order.forEach((idx, posIndex)=>{
+    const div = document.createElement('div');
+    div.className = ['second','first','third'][posIndex];
+    const label = posIndex===1? '1st': (posIndex===0?'2nd':'3rd');
+    const name = top3[idx] || '-';
+    // special nascar stage glow if matching
+    if(currentSheet.label === 'Nascar Cup' && currentSheet.config.stages){
+      const stageCols = currentSheet.config.stages;
+      // if the configured column for stage matches the podium column name, apply color
+      for(const stageName in stageCols){
+        if(stageName.toLowerCase() === (pCols[idx]||'').toLowerCase()){
+          div.classList.add(stageCols[stageName] === 'pink' ? 'glow-pink' : 'glow-green');
+        }
+      }
+    }
+    div.innerHTML = `<div class="pos-label">${label}</div><div class="winner-name">${escapeHtml(name)}</div>`;
+    podium.appendChild(div);
+    // animate
+    requestAnimationFrame(()=>{ div.style.transform='translateY(0)'; div.style.opacity='1'; });
+  });
+
+  // ensure initial styles for animation
+  Array.from(podium.children).forEach((el,i)=>{
+    el.style.transform='translateY(40px)';
+    el.style.opacity='0';
+    el.style.transition='all .55s cubic-bezier(.2,.9,.3,1)';
+    setTimeout(()=>{ el.style.transform='translateY(0)'; el.style.opacity='1'; }, 60*i);
+  });
+}
+
+// display table (either 'all' or specified columns)
 function displayTable(data){
-  const board = $('boardContainer');
-  board.innerHTML='';
-  const tableCols=currentSheet.config.table;
+  const board = $('boardContainer'); board.innerHTML = '';
+  const cols = currentSheet.config.table;
 
-  if(tableCols==='all'){
-    const headers=Object.keys(data[0]||{});
-    const table=document.createElement('table');
-    table.className='leaderboard-table';
-    const thead=document.createElement('thead');
-    thead.innerHTML='<tr>'+headers.map(h=>`<th>${h}</th>`).join('')+'</tr>';
-    table.appendChild(thead);
-    const tbody=document.createElement('tbody');
-    data.forEach(r=>{
-      const tr=document.createElement('tr');
-      tr.innerHTML=headers.map(h=>`<td>${r[h]}</td>`).join('');
-      tbody.appendChild(tr);
-    });
-    table.appendChild(tbody);
-    board.appendChild(table);
-  } else {
-    const table=document.createElement('table');
-    table.className='leaderboard-table';
-    const thead=document.createElement('thead');
-    thead.innerHTML='<tr>'+tableCols.map(h=>`<th>${h}</th>`).join('')+'</tr>';
-    table.appendChild(thead);
-    const tbody=document.createElement('tbody');
+  if(!data.length){
+    board.innerHTML = '<div class="placeholder">No results</div>'; return;
+  }
 
-    data.forEach(r=>{
-      const tr=document.createElement('tr');
-      tableCols.forEach(col=>{
-        const td=document.createElement('td');
-        td.textContent=r[col]||'';
-        if(currentSheet.label==='Nascar Cup' && currentSheet.config.stages){
-          for(let stage in currentSheet.config.stages){
-            if(col===stage) td.classList.add(currentSheet.config.stages[stage]==='pink'?'glow-pink':'glow-green');
+  if(cols === 'all'){
+    const headers = Object.keys(data[0]);
+    buildTable(board, headers, data);
+    return;
+  }
+
+  // map configured column names to actual header keys (case-insensitive) and build
+  const headers = cols.slice();
+  buildTable(board, headers, data, true);
+}
+
+// build table helper: if resolveKeys true, map requested headers to existing person keys ignoring case
+function buildTable(container, requestedHeaders, rows, resolveKeys=false){
+  const table = document.createElement('table'); table.className='leaderboard-table';
+  const thead = document.createElement('thead');
+  thead.innerHTML = '<tr>' + requestedHeaders.map(h=>`<th>${h}</th>`).join('') + '</tr>';
+  table.appendChild(thead);
+  const tbody = document.createElement('tbody');
+
+  rows.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    if(i===0) tr.classList.add('top1');
+    else if(i===1) tr.classList.add('top2');
+    else if(i===2) tr.classList.add('top3');
+
+    requestedHeaders.forEach(req => {
+      let val = '';
+      if(resolveKeys){
+        // find matching key in row (case-insensitive)
+        for(const k of Object.keys(r)){
+          if(k.toLowerCase() === req.toLowerCase()) { val = r[k]; break; }
+        }
+      } else {
+        val = r[req] || '';
+      }
+      const td = document.createElement('td'); td.innerHTML = escapeHtml(val);
+
+      // nascar stage glow handling for specific column names
+      if(currentSheet.label === 'Nascar Cup' && currentSheet.config.stages){
+        for(const stageName in currentSheet.config.stages){
+          if(stageName.toLowerCase() === req.toLowerCase()){
+            const color = currentSheet.config.stages[stageName];
+            td.classList.add(color === 'pink' ? 'glow-pink' : 'glow-green');
           }
         }
-        tr.appendChild(td);
-      });
-      tbody.appendChild(tr);
+      }
+
+      tr.appendChild(td);
     });
-    table.appendChild(tbody);
-    board.appendChild(table);
-  }
+
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(tbody);
+  container.appendChild(table);
 }
+
+// utility: find value in row case-insensitively
+function findValueInRow(row, wantKey){
+  if(!row) return '';
+  for(const k of Object.keys(row)){
+    if(k.toLowerCase() === wantKey.toLowerCase()) return row[k];
+  }
+  return '';
+}
+
+// escape HTML small helper
+function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
