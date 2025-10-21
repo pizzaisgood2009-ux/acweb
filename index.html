@@ -1,30 +1,37 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Assetto Corsa Times</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Assetto Corsa — Assetto Corsa Times</title>
+
+  <!-- PapaParse for robust CSV loading from Google Sheets -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="mainContainer">
-    <!-- Title -->
-    <div id="title">Assetto Corsa Times</div>
+    <header>
+      <h1 id="title">Assetto Corsa Times</h1>
+    </header>
 
-    <!-- Tabs Row -->
-    <div id="tabsRow"></div>
+    <nav id="tabsRow" class="tabs-row" aria-label="Series tabs"></nav>
 
-    <!-- Track Dropdown -->
-    <div style="text-align:center; margin:15px 0;">
-      <select id="trackPicker">
+    <div class="controls">
+      <select id="trackPicker" aria-label="Select track">
         <option value="">Select Track</option>
       </select>
+      <button id="resetTrack">Reset</button>
     </div>
 
-    <!-- Podium -->
-    <div id="podiumContainer" style="display:flex; justify-content:center; gap:15px; margin-bottom:20px;"></div>
+    <div id="dateDisplay" class="race-date" aria-live="polite"></div>
 
-    <!-- Leaderboard Table -->
-    <div id="boardContainer"></div>
+    <section id="podiumContainer" class="podium" aria-live="polite"></section>
+
+    <section id="boardContainer" class="board">
+      <div class="placeholder">Select a track to view results</div>
+    </section>
   </div>
 
   <script src="script.js"></script>
