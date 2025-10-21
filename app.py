@@ -1,118 +1,74 @@
-import streamlit as st
+from flask import Flask, render_template, jsonify
 import pandas as pd
+import requests
+from io import StringIO
 
-st.set_page_config(page_title="Apex Times", layout="wide")
+app = Flask(__name__)
 
-# Load Excel sheets
-@st.cache_data
-def load_data(file_path):
-    sheets = pd.read_excel(file_path, sheet_name=None)
-    valid_sheets = {}
-    for name, df in sheets.items():
-        if "track" in df.columns:
-            valid_sheets[name] = df
-    return valid_sheets
-
-data = load_data("apex_times.xlsx")
-
-# Sidebar for track selection
-st.sidebar.title("Apex Times")
-
-selected_tracks = {}
-for sheet_name, df in data.items():
-    tracks = df["track"].dropna().unique().tolist()
-    selected = st.sidebar.selectbox(f"{sheet_name} Track", tracks)
-    selected_tracks[sheet_name] = selected
-
-# Title
-st.title("🏁 Apex Times Podium & Results")
-
-# Styling for podium cards
-podium_style = """
-<style>
-.podium-container {
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-    gap: 1.5rem;
-    margin-top: 2rem;
-    margin-bottom: 2rem;
+# Google Sheets CSV links
+sheet_links = {
+    "F1": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSSQ9Zn5aGGooGR9EuRmmMW-08_hlcYR7uB3_au3_tD94jialyB8c_olGXYpQvhf2nMnw7Yd-10IVDu/pub?output=csv",
+    "IMSA GT3": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTcbp-Zy1fdIUZxUre2UFF7ibRCTscw1tMQ0G91rdDbTDmjKH8-MF-y1H3tJJEZxXLELIi0r_5zchBV/pub?output=csv",
+    "IMSA LMP2": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3Sq5RbkXrtMKvVPZS8jZGZu_nN4_J7Eddy-7FmV4wo0QnG_YZb5clpx0TiqDT3DN1S56_VagmRp3P/pub?output=csv",
+    "IndyCar": "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7Gfb8BPrv0HhxptUTq6pJmjVHSYIriySGawJa5iNwV_Wz_aj_xs1SHLIZU2RCxgQErF1eXnEBkUQv/pub?output=csv",
+    "NASCAR": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSH5c-BTz-ZfoJ3Rf58Q4eU9VBvsdq0XnsA99_qJM2Bvdqaq6Ex033d5gH57SQdcOm6haTNL3xi2Koh/pub?output=csv",
+    "For Fun": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0L2HtZ0QC3ZlIpCwOrzGVQY0cOUDGaQj2DtBNQuqvLKwQ4sLfRmAcb5LG4H9Q3D1CFkilV5QdIwge/pub?output=csv"
 }
-.podium-card {
-    flex: 1;
-    text-align: center;
-    border-radius: 12px;
-    padding: 1rem;
-    color: white;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-}
-.gold { background: linear-gradient(180deg, #FFD700, #DAA520); }
-.silver { background: linear-gradient(180deg, #C0C0C0, #808080); }
-.bronze { background: linear-gradient(180deg, #CD7F32, #8B4513); }
-.first { height: 260px; }
-.second { height: 220px; }
-.third { height: 200px; }
-.podium-rank {
-    font-size: 1.6rem;
-    font-weight: bold;
-}
-.podium-name {
-    font-size: 1.2rem;
-    margin-top: 0.5rem;
-}
-.podium-time {
-    font-size: 1rem;
-    margin-top: 0.25rem;
-}
-</style>
-"""
 
-st.markdown(podium_style, unsafe_allow_html=True)
+def get_csv_data(url):
+    """Fetch and read a Google Sheet CSV."""
+    try:
+        csv_data = requests.get(url).content.decode('utf-8')
+        df = pd.read_csv(StringIO(csv_data))
+        df.columns = df.columns.str.strip()  # Clean header names
+        return df
+    except Exception as e:
+        print(f"Error loading sheet: {e}")
+        return pd.DataFrame()
 
-# Display each selected track
-for sheet, track in selected_tracks.items():
-    df = data[sheet]
-    filtered = df[df["track"] == track]
+@app.route('/')
+def index():
+    return render_template('index.html', sheets=list(sheet_links.keys()))
 
-    st.subheader(f"📍 {sheet} — {track}")
-
-    if "position" in filtered.columns:
-        podium = filtered.sort_values("position").head(3)
-
-        if len(podium) >= 3:
-            # Assign order so 1st is center, 2nd left, 3rd right
-            second = podium.iloc[1]
-            first = podium.iloc[0]
-            third = podium.iloc[2]
-
-            st.markdown("""
-            <div class="podium-container">
-                <div class="podium-card silver second">
-                    <div class="podium-rank">🥈 2nd</div>
-                    <div class="podium-name">{}</div>
-                    <div class="podium-time">{}</div>
-                </div>
-                <div class="podium-card gold first">
-                    <div class="podium-rank">🥇 1st</div>
-                    <div class="podium-name">{}</div>
-                    <div class="podium-time">{}</div>
-                </div>
-                <div class="podium-card bronze third">
-                    <div class="podium-rank">🥉 3rd</div>
-                    <div class="podium-name">{}</div>
-                    <div class="podium-time">{}</div>
-                </div>
-            </div>
-            """.format(
-                second.get("driver", "Unknown"), second.get("time", "-"),
-                first.get("driver", "Unknown"), first.get("time", "-"),
-                third.get("driver", "Unknown"), third.get("time", "-"),
-            ), unsafe_allow_html=True)
-        else:
-            st.warning("Not enough racers for a full podium.")
+@app.route('/tracks/<sheet>')
+def get_tracks(sheet):
+    df = get_csv_data(sheet_links[sheet])
+    if df.empty:
+        return jsonify([])
+    
+    if 'track' in df.columns:
+        tracks = df['track'].dropna().unique().tolist()
+    elif 'Track' in df.columns:
+        tracks = df['Track'].dropna().unique().tolist()
     else:
-        st.warning("No 'position' column found to create podium.")
+        tracks = []
+    return jsonify(tracks)
 
-    # Full table
-    st.markdown("### 📊 Full Results Table")
-    st.dataframe(filtered.reset_index(drop=True))
+@app.route('/results/<sheet>/<track>')
+def get_results(sheet, track):
+    df = get_csv_data(sheet_links[sheet])
+    if df.empty:
+        return jsonify({})
+    
+    df = df[df['track'].astype(str).str.lower() == track.lower()]
+
+    results = {}
+    if sheet == "For Fun":
+        results["table"] = df.to_dict(orient="records")
+    elif sheet == "NASCAR":
+        results["winner"] = df["Race Winner"].iloc[0] if "Race Winner" in df else None
+        results["second"] = df["2nd Place"].iloc[0] if "2nd Place" in df else None
+        results["third"] = df["3rd Place"].iloc[0] if "3rd Place" in df else None
+        results["table"] = df.iloc[:, 3:].to_dict(orient="records")
+        results["stage1"] = df["Stage 1 Winner"].iloc[0] if "Stage 1 Winner" in df else None
+        results["stage2"] = df["Stage 2 Winner"].iloc[0] if "Stage 2 Winner" in df else None
+    else:
+        results["winner"] = df["Winner"].iloc[0] if "Winner" in df else None
+        results["second"] = df["2nd Place"].iloc[0] if "2nd Place" in df else None
+        results["third"] = df["3rd Place"].iloc[0] if "3rd Place" in df else None
+        results["table"] = df.iloc[:, 3:].to_dict(orient="records")
+    
+    return jsonify(results)
+
+if __name__ == '__main__':
+    app.run(debug=True)
