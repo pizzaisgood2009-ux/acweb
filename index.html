@@ -1,39 +1,48 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Assetto Corsa — Assetto Corsa Times</title>
-
-  <!-- PapaParse for robust CSV loading from Google Sheets -->
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <title>Apex Times</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <div id="mainContainer">
-    <header>
-      <h1 id="title">Assetto Corsa Times</h1>
-    </header>
+    <div class="container">
+        <header>
+            <h1>Apex Times</h1>
+            <nav id="tabs">
+                {% for sheet in sheets %}
+                    <button class="tab-btn" onclick="loadTracks('{{ sheet }}')">{{ sheet }}</button>
+                {% endfor %}
+            </nav>
+        </header>
 
-    <nav id="tabsRow" class="tabs-row" aria-label="Series tabs"></nav>
+        <section id="track-select">
+            <h2>Select Track</h2>
+            <select id="track-dropdown" onchange="loadResults()">
+                <option value="">-- Select Track --</option>
+            </select>
+        </section>
 
-    <div class="controls">
-      <select id="trackPicker" aria-label="Select track">
-        <option value="">Select Track</option>
-      </select>
-      <button id="resetTrack">Reset</button>
+        <section id="podium" class="hidden">
+            <div class="podium-spot second">
+                <div class="podium-card silver">2nd<br><span id="second-place"></span></div>
+            </div>
+            <div class="podium-spot first">
+                <div class="podium-card gold">1st<br><span id="first-place"></span></div>
+            </div>
+            <div class="podium-spot third">
+                <div class="podium-card bronze">3rd<br><span id="third-place"></span></div>
+            </div>
+        </section>
+
+        <section id="table-section" class="hidden">
+            <table id="results-table">
+                <thead></thead>
+                <tbody></tbody>
+            </table>
+        </section>
     </div>
 
-    <div id="dateDisplay" class="race-date" aria-live="polite"></div>
-
-    <section id="podiumContainer" class="podium" aria-live="polite"></section>
-
-    <section id="boardContainer" class="board">
-      <div class="placeholder">Select a track to view results</div>
-    </section>
-  </div>
-
-  <script src="script.js"></script>
+    <script src="/static/script.js"></script>
 </body>
 </html>
