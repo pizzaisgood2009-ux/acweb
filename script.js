@@ -175,4 +175,4 @@ function clearResults() { podium.innerHTML = ""; table.innerHTML = ""; }
 function showLoader() { loader && loader.classList.remove("hidden"); }
 function hideLoader() { loader && loader.classList.add("hidden"); }
 
-loadSeries("f1");
+loadSeries("fun");
