@@ -29,11 +29,19 @@ async function loadSeries(series) {
 
   try {
     const url = sheets[series] + "?v=" + Date.now();
-    const response = await fetch(url);
-    const text = await response.text();
-    const data = Papa.parse(text, { header: true }).data.map(normalizeKeys);
+    const res = await fetch(url);
+    const raw = await res.text();
+    const clean = sliceFromRealHeader(raw);
 
-    const trackCol = findColumn(data, ["track"]);
+    const data = Papa.parse(clean, {
+      header: true,
+      skipEmptyLines: true,
+      transformHeader: h => h.trim().toLowerCase(),
+    }).data
+      .map(normalizeKeys)
+      .filter(rowHasAnyValue);
+
+    const trackCol = findColumn(data, ["track", "race", "circuit", "venue"]);
     if (!trackCol) {
       dropdown.innerHTML = `<option>No track column found</option>`;
       statusText.textContent = `⚠️ No track column found`;
@@ -49,36 +57,56 @@ async function loadSeries(series) {
       return;
     }
 
-    dropdown.innerHTML = `<option value="">Select Track</option>`;
-    tracks.forEach(t => dropdown.innerHTML += `<option value="${t}">${t}</option>`);
+    dropdown.innerHTML = `<option value="">Select Track</option>` +
+      tracks.map(t => `<option value="${t}">${t}</option>`).join("");
+
     statusText.textContent = `${tracks.length} tracks available`;
     dropdown.onchange = () => showResults(series, data, trackCol, dropdown.value);
-  } catch (e) {
-    console.error(e);
+  } catch (err) {
+    console.error(err);
+    dropdown.innerHTML = `<option>Error loading</option>`;
     statusText.textContent = `Error loading ${series}`;
   } finally {
     hideLoader();
   }
 }
 
+// --- Utilities ---
+
+function sliceFromRealHeader(text) {
+  const lines = text.replace(/\r/g, "").split("\n");
+  const idx = lines.findIndex(line => {
+    const cells = line.split(",").map(c => cleanKey(c));
+    return cells.some(c => c.includes("track") || c.includes("race") || c.includes("circuit") || c.includes("venue"));
+  });
+  return idx >= 0 ? lines.slice(idx).join("\n") : text;
+}
+
+function cleanKey(s) {
+  return String(s || "")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(/[_\s]+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
 function normalizeKeys(row) {
-  const normalized = {};
-  for (const key in row) {
-    const cleanKey = key
-      .replace(/[\u200B-\u200D\uFEFF]/g, "")
-      .replace(/[_\s]+/g, " ")
-      .trim()
-      .toLowerCase();
-    normalized[cleanKey] = row[key];
-  }
-  return normalized;
+  const out = {};
+  for (const key in row) out[cleanKey(key)] = typeof row[key] === "string" ? row[key].trim() : row[key];
+  return out;
+}
+
+function rowHasAnyValue(row) {
+  return Object.values(row).some(v => v && String(v).trim() !== "");
 }
 
 function findColumn(data, keywords) {
   if (!data.length) return null;
   const keys = Object.keys(data[0]);
-  return keys.find(k => keywords.some(word => k.includes(word))) || null;
+  return keys.find(k => keywords.some(w => k.includes(w))) || null;
 }
+
+// --- Display logic ---
 
 function showResults(series, data, trackCol, track) {
   clearResults();
@@ -94,7 +122,7 @@ function showResults(series, data, trackCol, track) {
 
   const race = rows[0];
 
-  // FUN RACES - show full table
+  // Fun Races - full table
   if (series === "fun") {
     const headers = Object.keys(race);
     table.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr>` +
@@ -103,12 +131,9 @@ function showResults(series, data, trackCol, track) {
     return;
   }
 
-  // FIND PODIUM ENTRIES FOR EACH SERIES
-  const first = race["winner"] || race["race winner"];
-  const second = race["2nd place"];
-  const third = race["3rd place"];
-  const fourth = race["4th place"];
-  const fifth = race["5th place"];
+  const first = pickFirst(race, [["winner"], ["race winner"]]);
+  const second = pickFirst(race, [["2nd place"]]);
+  const third = pickFirst(race, [["3rd place"]]);
 
   podium.innerHTML = `
     <div class="place second">${second || ""}</div>
@@ -116,44 +141,38 @@ function showResults(series, data, trackCol, track) {
     <div class="place third">${third || ""}</div>
   `;
 
-  // NASCAR / SLM stage highlight
-  const stage1 = race["stage 1 winner"];
-  const stage2 = race["stage 2 winner"];
-  if (["nascar", "slm"].includes(series)) {
-    if (stage1 && first && stage1 === first) document.querySelector(".first").classList.add("stage1");
-    if (stage2 && first && stage2 === first) document.querySelector(".first").classList.add("stage2");
-  }
-
-  // REST OF RESULTS TABLE
-  const restPositions = Object.entries(race)
-    .filter(([k]) => k.includes("place") && !["2nd place", "3rd place"].includes(k))
+  const rest = Object.entries(race)
+    .filter(([k, v]) => k.includes("place") && !["2nd place", "3rd place"].includes(k) && v && v.trim() !== "")
     .map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`)
     .join("");
 
-  if (restPositions) {
-    table.innerHTML = `<tr><th>Position</th><th>Driver</th></tr>${restPositions}`;
-  }
-
+  if (rest) table.innerHTML = `<tr><th>Position</th><th>Driver</th></tr>${rest}`;
   hideLoader();
 }
 
-function stageGlow(series, race, name) {
-  if (["nascar", "slm"].includes(series)) {
-    if (race["stage 1 winner"] === name) return "stage1";
-    if (race["stage 2 winner"] === name) return "stage2";
+function pickFirst(row, groups) {
+  for (const group of groups) {
+    const key = Object.keys(row).find(k => group.some(word => k.includes(word)));
+    if (key && row[key]) return row[key];
   }
   return "";
 }
 
-function clearAll() {
-  dropdown.innerHTML = "";
-  clearResults();
+function stageGlow(series, race, name) {
+  if (!name) return "";
+  if (["nascar", "slm"].includes(series)) {
+    const s1 = race["stage 1 winner"], s2 = race["stage 2 winner"];
+    if (s1 && s1.trim() === name.trim()) return "stage1";
+    if (s2 && s2.trim() === name.trim()) return "stage2";
+  }
+  return "";
 }
-function clearResults() {
-  podium.innerHTML = "";
-  table.innerHTML = "";
-}
-function showLoader() { loader.classList.remove("hidden"); }
-function hideLoader() { loader.classList.add("hidden"); }
+
+// --- UI Helpers ---
+
+function clearAll() { dropdown.innerHTML = ""; clearResults(); }
+function clearResults() { podium.innerHTML = ""; table.innerHTML = ""; }
+function showLoader() { loader && loader.classList.remove("hidden"); }
+function hideLoader() { loader && loader.classList.add("hidden"); }
 
 loadSeries("f1");
