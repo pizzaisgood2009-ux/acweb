@@ -5,7 +5,7 @@ const sheets = {
   imsaGT3: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTcbp-Zy1fdIUZxUre2UFF7ibRCTscw1tMQ0G91rdDbTDmjKH8-MF-y1H3tJJEZxXLELIi0r_5zchBV/pub?output=csv",
   imsaLMP2: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3Sq5RbkXrtMKvVPZS8jZGZu_nN4_J7Eddy-7FmV4wo0QnG_YZb5clpx0TiqDT3DN1S56_VagmRp3P/pub?output=csv",
   nascar: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSH5c-BTz-ZfoJ3Rf58Q4eU9VBvsdq0XnsA99_qJM2Bvdqaq6Ex033d5gH57SQdcOm6haTNL3xi2Koh/pub?output=csv",
-  slm: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVDfTXz8FwR6oL03HzFcOwZWJf1V8srF_FHSoXZbBevqS8tV9RFFBNTaHSm4-66ViUwJ8UCkrWVCgn/pub?output=csv",
+  slm: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVDfTXz8FwR6oL03HzFcOwZWJf1V8srF_FHSoXZbBevqS8tV9RFFBNTaHSm4-66ViUwJ8UCkrWVCgn/pub?output=csv"
 };
 
 const dropdown = document.getElementById("trackSelect");
@@ -13,6 +13,7 @@ const podium = document.getElementById("podium");
 const table = document.getElementById("leaderboard");
 const loader = document.getElementById("loader");
 
+// --- EVENT SETUP ---
 document.querySelectorAll(".tab").forEach(tab => {
   tab.addEventListener("click", async () => {
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
@@ -23,30 +24,38 @@ document.querySelectorAll(".tab").forEach(tab => {
 
 async function loadSeries(series) {
   showLoader();
-  podium.innerHTML = "";
-  table.innerHTML = "";
-  dropdown.innerHTML = `<option>Loading...</option>`;
+  clearAll();
 
   try {
-    const response = await fetch(sheets[series]);
-    const text = await response.text();
-    const data = Papa.parse(text, { header: true }).data.map(r => normalizeKeys(r));
+    const cacheBuster = `?v=${Date.now()}`; // force fresh fetch
+    const url = sheets[series] + cacheBuster;
 
-    const trackCol = findTrackColumn(data);
-    if (!trackCol) {
-      dropdown.innerHTML = `<option>No track column found</option>`;
+    const res = await fetch(url);
+    const text = await res.text();
+
+    const data = Papa.parse(text, { header: true }).data.map(row => normalizeKeys(row));
+    const trackColumn = findTrackColumn(data);
+
+    if (!trackColumn) {
+      dropdown.innerHTML = `<option>No "track" column found in ${series}</option>`;
       hideLoader();
       return;
     }
 
-    const tracks = [...new Set(data.map(r => r[trackCol]).filter(Boolean))];
+    const tracks = [...new Set(data.map(r => r[trackColumn]).filter(Boolean))];
+    if (!tracks.length) {
+      dropdown.innerHTML = `<option>No tracks yet</option>`;
+      hideLoader();
+      return;
+    }
+
     dropdown.innerHTML = `<option value="">Select Track</option>`;
     tracks.forEach(t => dropdown.innerHTML += `<option value="${t}">${t}</option>`);
 
-    dropdown.onchange = () => showResults(series, data, trackCol, dropdown.value);
-  } catch (e) {
-    console.error(e);
-    dropdown.innerHTML = `<option>Error loading sheet</option>`;
+    dropdown.onchange = () => showResults(series, data, trackColumn, dropdown.value);
+  } catch (err) {
+    console.error("Error loading:", series, err);
+    dropdown.innerHTML = `<option>Error loading ${series}</option>`;
   } finally {
     hideLoader();
   }
@@ -54,7 +63,7 @@ async function loadSeries(series) {
 
 function normalizeKeys(row) {
   const norm = {};
-  for (const key in row) norm[key.trim().toLowerCase()] = row[key];
+  for (const k in row) norm[k.trim().toLowerCase()] = row[k];
   return norm;
 }
 
@@ -64,19 +73,14 @@ function findTrackColumn(data) {
   return keys.find(k => k.includes("track")) || null;
 }
 
-function showResults(series, data, trackCol, track) {
+function showResults(series, data, trackColumn, track) {
+  clearResults();
+  if (!track) return;
+
   showLoader();
-  podium.innerHTML = "";
-  table.innerHTML = "";
-
-  if (!track) {
-    hideLoader();
-    return;
-  }
-
-  const rows = data.filter(r => (r[trackCol] || "").toLowerCase() === track.toLowerCase());
+  const rows = data.filter(r => (r[trackColumn] || "").toLowerCase() === track.toLowerCase());
   if (!rows.length) {
-    table.innerHTML = `<tr><td colspan="2">No results yet for this track.</td></tr>`;
+    table.innerHTML = `<tr><td colspan="2">No results yet for ${track}</td></tr>`;
     hideLoader();
     return;
   }
@@ -117,8 +121,18 @@ function stageGlow(series, race, name) {
   return "";
 }
 
+function clearAll() {
+  dropdown.innerHTML = "";
+  clearResults();
+}
+
+function clearResults() {
+  podium.innerHTML = "";
+  table.innerHTML = "";
+}
+
 function showLoader() { loader.classList.remove("hidden"); }
 function hideLoader() { loader.classList.add("hidden"); }
 
-// Start on F1 by default
+// default start on f1
 loadSeries("f1");
