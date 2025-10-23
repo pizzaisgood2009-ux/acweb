@@ -28,7 +28,7 @@ async function loadSeries(series) {
 
     const trackColumn = findTrackColumn(data);
     if (!trackColumn) {
-      dropdown.innerHTML = `<option>No "track" column found</option>`;
+      dropdown.innerHTML = `<option>No track column found</option>`;
       return;
     }
 
@@ -47,14 +47,18 @@ async function loadSeries(series) {
 
 function normalizeKeys(row) {
   const normalized = {};
-  for (const key in row) normalized[key.trim().toLowerCase()] = row[key];
+  for (const key in row) {
+    normalized[key.trim().toLowerCase()] = row[key];
+  }
   return normalized;
 }
 
+// 🔧 Smarter track column detection
 function findTrackColumn(data) {
   if (!data.length) return null;
   const keys = Object.keys(data[0]);
-  return keys.find(k => k.toLowerCase() === "track" || k.toLowerCase() === "tracks") || null;
+  // find any column whose name contains the word "track"
+  return keys.find(k => k.includes("track"));
 }
 
 function showResults(series, data, trackColumn, track) {
