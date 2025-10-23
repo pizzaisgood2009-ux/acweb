@@ -163,5 +163,4 @@ function clearResults() {
 function showLoader() { loader.classList.remove("hidden"); }
 function hideLoader() { loader.classList.add("hidden"); }
 
-// load F1 by default
-loadSeries("f1");
+
