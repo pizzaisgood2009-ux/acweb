@@ -21,23 +21,48 @@ document.querySelectorAll(".tab").forEach(tab => {
 });
 
 async function loadSeries(series) {
-  const response = await fetch(sheets[series]);
-  const text = await response.text();
-  const data = Papa.parse(text, { header: true }).data;
-  const tracks = [...new Set(data.map(row => row.Track).filter(t => t))];
+  try {
+    const response = await fetch(sheets[series]);
+    const text = await response.text();
+    const data = Papa.parse(text, { header: true }).data.map(r => normalizeKeys(r));
 
-  dropdown.innerHTML = `<option value="">Select Track</option>`;
-  tracks.forEach(t => dropdown.innerHTML += `<option value="${t}">${t}</option>`);
+    const trackColumn = findTrackColumn(data);
+    if (!trackColumn) {
+      dropdown.innerHTML = `<option>No "track" column found</option>`;
+      return;
+    }
 
-  dropdown.onchange = () => showResults(series, data, dropdown.value);
-  podium.innerHTML = "";
-  table.innerHTML = "";
+    const tracks = [...new Set(data.map(r => r[trackColumn]).filter(Boolean))];
+    dropdown.innerHTML = `<option value="">Select Track</option>`;
+    tracks.forEach(t => dropdown.innerHTML += `<option value="${t}">${t}</option>`);
+
+    dropdown.onchange = () => showResults(series, data, trackColumn, dropdown.value);
+    podium.innerHTML = "";
+    table.innerHTML = "";
+  } catch (err) {
+    console.error(err);
+    dropdown.innerHTML = `<option>Error loading sheet</option>`;
+  }
 }
 
-function showResults(series, data, track) {
+function normalizeKeys(row) {
+  const normalized = {};
+  for (const key in row) normalized[key.trim().toLowerCase()] = row[key];
+  return normalized;
+}
+
+function findTrackColumn(data) {
+  if (!data.length) return null;
+  const keys = Object.keys(data[0]);
+  return keys.find(k => k.toLowerCase() === "track" || k.toLowerCase() === "tracks") || null;
+}
+
+function showResults(series, data, trackColumn, track) {
   podium.innerHTML = "";
   table.innerHTML = "";
-  const rows = data.filter(r => r.Track === track);
+  if (!track) return;
+
+  const rows = data.filter(r => (r[trackColumn] || "").toLowerCase() === track.toLowerCase());
   if (!rows.length) {
     table.innerHTML = `<tr><td colspan="2">No results yet for this track.</td></tr>`;
     return;
@@ -51,9 +76,9 @@ function showResults(series, data, track) {
     return;
   }
 
-  const first = race["Winner"] || race["Race Winner"];
-  const second = race["2nd Place"];
-  const third = race["3rd Place"];
+  const first = race["winner"] || race["race winner"];
+  const second = race["2nd place"];
+  const third = race["3rd place"];
 
   podium.innerHTML = `
     <div class="place second">${second || ""}</div>
@@ -62,7 +87,7 @@ function showResults(series, data, track) {
   `;
 
   const rest = Object.entries(race)
-    .filter(([k]) => k.includes("Place") && !["Winner", "2nd Place", "3rd Place", "Race Winner"].includes(k))
+    .filter(([k]) => k.includes("place") && !["winner", "race winner", "2nd place", "3rd place"].includes(k))
     .map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`)
     .join("");
 
@@ -71,8 +96,8 @@ function showResults(series, data, track) {
 
 function stageGlow(series, race, name) {
   if (["nascar", "slm"].includes(series)) {
-    if (race["Stage 1 Winner"] === name) return "stage1";
-    if (race["Stage 2 Winner"] === name) return "stage2";
+    if (race["stage 1 winner"] === name) return "stage1";
+    if (race["stage 2 winner"] === name) return "stage2";
   }
   return "";
 }
