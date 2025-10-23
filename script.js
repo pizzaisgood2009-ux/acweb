@@ -11,6 +11,7 @@ const sheets = {
 const dropdown = document.getElementById("trackSelect");
 const podium = document.getElementById("podium");
 const table = document.getElementById("leaderboard");
+const loader = document.getElementById("loader");
 let currentSeries = "f1";
 
 document.querySelectorAll(".tab").forEach(tab => {
@@ -24,6 +25,7 @@ document.querySelectorAll(".tab").forEach(tab => {
 
 async function loadSeries(series) {
   try {
+    showLoader();
     podium.innerHTML = "";
     table.innerHTML = "";
     dropdown.innerHTML = `<option>Loading...</option>`;
@@ -34,6 +36,7 @@ async function loadSeries(series) {
 
     const trackColumn = findTrackColumn(data);
     if (!trackColumn) {
+      hideLoader();
       dropdown.innerHTML = `<option>No track column found</option>`;
       return;
     }
@@ -46,6 +49,8 @@ async function loadSeries(series) {
   } catch (err) {
     console.error(err);
     dropdown.innerHTML = `<option>Error loading sheet</option>`;
+  } finally {
+    hideLoader();
   }
 }
 
@@ -62,40 +67,49 @@ function findTrackColumn(data) {
 }
 
 function showResults(series, data, trackColumn, track) {
-  podium.innerHTML = "";
-  table.innerHTML = "";
-  if (!track) return;
+  showLoader();
+  setTimeout(() => {
+    podium.innerHTML = "";
+    table.innerHTML = "";
+    if (!track) {
+      hideLoader();
+      return;
+    }
 
-  const rows = data.filter(r => (r[trackColumn] || "").toLowerCase() === track.toLowerCase());
-  if (!rows.length) {
-    table.innerHTML = `<tr><td colspan="2">No results yet for this track.</td></tr>`;
-    return;
-  }
+    const rows = data.filter(r => (r[trackColumn] || "").toLowerCase() === track.toLowerCase());
+    if (!rows.length) {
+      table.innerHTML = `<tr><td colspan="2">No results yet for this track.</td></tr>`;
+      hideLoader();
+      return;
+    }
 
-  const race = rows[0];
-  if (series === "fun") {
-    const headers = Object.keys(race);
-    table.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr>` +
-      data.map(r => `<tr>${headers.map(h => `<td>${r[h] || ""}</td>`).join("")}</tr>`).join("");
-    return;
-  }
+    const race = rows[0];
+    if (series === "fun") {
+      const headers = Object.keys(race);
+      table.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr>` +
+        data.map(r => `<tr>${headers.map(h => `<td>${r[h] || ""}</td>`).join("")}</tr>`).join("");
+      hideLoader();
+      return;
+    }
 
-  const first = race["winner"] || race["race winner"];
-  const second = race["2nd place"];
-  const third = race["3rd place"];
+    const first = race["winner"] || race["race winner"];
+    const second = race["2nd place"];
+    const third = race["3rd place"];
 
-  podium.innerHTML = `
-    <div class="place second">${second || ""}</div>
-    <div class="place first ${stageGlow(series, race, first)}">${first || ""}</div>
-    <div class="place third">${third || ""}</div>
-  `;
+    podium.innerHTML = `
+      <div class="place second">${second || ""}</div>
+      <div class="place first ${stageGlow(series, race, first)}">${first || ""}</div>
+      <div class="place third">${third || ""}</div>
+    `;
 
-  const rest = Object.entries(race)
-    .filter(([k]) => k.includes("place") && !["winner", "race winner", "2nd place", "3rd place"].includes(k))
-    .map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`)
-    .join("");
+    const rest = Object.entries(race)
+      .filter(([k]) => k.includes("place") && !["winner", "race winner", "2nd place", "3rd place"].includes(k))
+      .map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`)
+      .join("");
 
-  table.innerHTML = `<tr><th>Position</th><th>Driver</th></tr>${rest}`;
+    table.innerHTML = `<tr><th>Position</th><th>Driver</th></tr>${rest}`;
+    hideLoader();
+  }, 300);
 }
 
 function stageGlow(series, race, name) {
@@ -104,6 +118,14 @@ function stageGlow(series, race, name) {
     if (race["stage 2 winner"] === name) return "stage2";
   }
   return "";
+}
+
+function showLoader() {
+  loader.classList.remove("hidden");
+}
+
+function hideLoader() {
+  loader.classList.add("hidden");
 }
 
 loadSeries("f1");
