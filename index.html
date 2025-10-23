@@ -1,35 +1,29 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Assetto Corsa Times</title>
-
-  <!-- PapaParse for CSV fetching/parsing -->
+  <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-
-  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="mainContainer">
-    <h1 id="title">Assetto Corsa Times</h1>
+  <div class="container">
+    <h1>Assetto Corsa Times</h1>
 
-    <div id="tabsRow" class="tabs-row" role="tablist"></div>
-
-    <div class="controls">
-      <select id="trackPicker" aria-label="Select track">
-        <option value="">Select Track</option>
-      </select>
-      <button id="resetTrack" class="btn">Reset</button>
+    <div class="tabs">
+      <button class="tab active" data-series="fun"><img src="img/fun.png" alt="">Fun Races</button>
+      <button class="tab" data-series="f1"><img src="img/f1.png" alt="">F1</button>
+      <button class="tab" data-series="indycar"><img src="img/indycar.png" alt="">IndyCar</button>
+      <button class="tab" data-series="imsaGT3"><img src="img/imsa_gt3.png" alt="">IMSA GT3</button>
+      <button class="tab" data-series="imsaLMP2"><img src="img/imsa_lmp2.png" alt="">IMSA LMP2</button>
+      <button class="tab" data-series="nascar"><img src="img/nascar.png" alt="">NASCAR Cup</button>
+      <button class="tab" data-series="slm"><img src="img/slm.png" alt="">Super Late Model</button>
     </div>
 
-    <div id="dateDisplay" class="race-date" aria-live="polite"></div>
-
-    <section id="podiumContainer" class="podium" aria-live="polite"></section>
-
-    <section id="boardContainer" class="board">
-      <div class="placeholder">Select a track to view results</div>
-    </section>
+    <select id="trackSelect"></select>
+    <div id="podium"></div>
+    <table id="leaderboard"></table>
   </div>
 
   <script src="script.js"></script>
