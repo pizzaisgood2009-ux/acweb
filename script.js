@@ -12,19 +12,8 @@ const dropdown = document.getElementById("trackSelect");
 const podium = document.getElementById("podium");
 const table = document.getElementById("leaderboard");
 const loader = document.getElementById("loader");
+const statusText = document.getElementById("trackStatus");
 
-// create the red “loading tracks…” and count element
-let statusText = document.getElementById("trackStatus");
-if (!statusText) {
-  statusText = document.createElement("p");
-  statusText.id = "trackStatus";
-  statusText.style.color = "#ff1e1e";
-  statusText.style.fontSize = "14px";
-  statusText.style.marginTop = "-10px";
-  dropdown.insertAdjacentElement("afterend", statusText);
-}
-
-// ------------------------ TAB SWITCHING ------------------------
 document.querySelectorAll(".tab").forEach(tab => {
   tab.addEventListener("click", async () => {
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
@@ -33,28 +22,26 @@ document.querySelectorAll(".tab").forEach(tab => {
   });
 });
 
-// ------------------------ LOAD SERIES ------------------------
 async function loadSeries(series) {
   showLoader();
   clearAll();
   statusText.textContent = `Loading ${series.toUpperCase()} tracks...`;
 
   try {
-    const cacheBuster = `?v=${Date.now()}`;
-    const url = sheets[series] + cacheBuster;
+    const url = sheets[series] + "?v=" + Date.now();
     const response = await fetch(url);
     const text = await response.text();
-    const data = Papa.parse(text, { header: true }).data.map(r => normalizeKeys(r));
+    const data = Papa.parse(text, { header: true }).data.map(normalizeKeys);
 
-    const trackColumn = findTrackColumn(data);
-    if (!trackColumn) {
+    const trackCol = findColumn(data, ["track"]);
+    if (!trackCol) {
       dropdown.innerHTML = `<option>No track column found</option>`;
-      statusText.textContent = `⚠️ No track column detected for ${series.toUpperCase()}`;
+      statusText.textContent = `⚠️ No track column found`;
       hideLoader();
       return;
     }
 
-    const tracks = [...new Set(data.map(r => r[trackColumn]).filter(Boolean))];
+    const tracks = [...new Set(data.map(r => r[trackCol]).filter(Boolean))];
     if (!tracks.length) {
       dropdown.innerHTML = `<option>No tracks yet</option>`;
       statusText.textContent = `0 tracks available`;
@@ -65,24 +52,21 @@ async function loadSeries(series) {
     dropdown.innerHTML = `<option value="">Select Track</option>`;
     tracks.forEach(t => dropdown.innerHTML += `<option value="${t}">${t}</option>`);
     statusText.textContent = `${tracks.length} tracks available`;
-
-    dropdown.onchange = () => showResults(series, data, trackColumn, dropdown.value);
-  } catch (err) {
-    console.error("Error loading:", series, err);
-    dropdown.innerHTML = `<option>Error loading ${series}</option>`;
+    dropdown.onchange = () => showResults(series, data, trackCol, dropdown.value);
+  } catch (e) {
+    console.error(e);
     statusText.textContent = `Error loading ${series}`;
   } finally {
     hideLoader();
   }
 }
 
-// ------------------------ HELPER FUNCTIONS ------------------------
 function normalizeKeys(row) {
   const normalized = {};
   for (const key in row) {
     const cleanKey = key
-      .replace(/[\u200B-\u200D\uFEFF]/g, "")   // remove hidden Unicode spaces
-      .replace(/[_\s]+/g, " ")                // replace underscores and extra spaces
+      .replace(/[\u200B-\u200D\uFEFF]/g, "")
+      .replace(/[_\s]+/g, " ")
       .trim()
       .toLowerCase();
     normalized[cleanKey] = row[key];
@@ -90,24 +74,18 @@ function normalizeKeys(row) {
   return normalized;
 }
 
-function findTrackColumn(data) {
+function findColumn(data, keywords) {
   if (!data.length) return null;
   const keys = Object.keys(data[0]);
-  // detect any column resembling a track name
-  return keys.find(k =>
-    k.includes("track") ||
-    k.includes("race") ||
-    k.includes("circuit") ||
-    k.includes("venue")
-  ) || null;
+  return keys.find(k => keywords.some(word => k.includes(word))) || null;
 }
 
-function showResults(series, data, trackColumn, track) {
+function showResults(series, data, trackCol, track) {
   clearResults();
   if (!track) return;
-
   showLoader();
-  const rows = data.filter(r => (r[trackColumn] || "").toLowerCase() === track.toLowerCase());
+
+  const rows = data.filter(r => (r[trackCol] || "").toLowerCase() === track.toLowerCase());
   if (!rows.length) {
     table.innerHTML = `<tr><td colspan="2">No results yet for ${track}</td></tr>`;
     hideLoader();
@@ -115,6 +93,8 @@ function showResults(series, data, trackColumn, track) {
   }
 
   const race = rows[0];
+
+  // FUN RACES - show full table
   if (series === "fun") {
     const headers = Object.keys(race);
     table.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr>` +
@@ -123,9 +103,12 @@ function showResults(series, data, trackColumn, track) {
     return;
   }
 
+  // FIND PODIUM ENTRIES FOR EACH SERIES
   const first = race["winner"] || race["race winner"];
   const second = race["2nd place"];
   const third = race["3rd place"];
+  const fourth = race["4th place"];
+  const fifth = race["5th place"];
 
   podium.innerHTML = `
     <div class="place second">${second || ""}</div>
@@ -133,12 +116,24 @@ function showResults(series, data, trackColumn, track) {
     <div class="place third">${third || ""}</div>
   `;
 
-  const rest = Object.entries(race)
-    .filter(([k]) => k.includes("place") && !["winner", "race winner", "2nd place", "3rd place"].includes(k))
+  // NASCAR / SLM stage highlight
+  const stage1 = race["stage 1 winner"];
+  const stage2 = race["stage 2 winner"];
+  if (["nascar", "slm"].includes(series)) {
+    if (stage1 && first && stage1 === first) document.querySelector(".first").classList.add("stage1");
+    if (stage2 && first && stage2 === first) document.querySelector(".first").classList.add("stage2");
+  }
+
+  // REST OF RESULTS TABLE
+  const restPositions = Object.entries(race)
+    .filter(([k]) => k.includes("place") && !["2nd place", "3rd place"].includes(k))
     .map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`)
     .join("");
 
-  table.innerHTML = `<tr><th>Position</th><th>Driver</th></tr>${rest}`;
+  if (restPositions) {
+    table.innerHTML = `<tr><th>Position</th><th>Driver</th></tr>${restPositions}`;
+  }
+
   hideLoader();
 }
 
@@ -154,13 +149,11 @@ function clearAll() {
   dropdown.innerHTML = "";
   clearResults();
 }
-
 function clearResults() {
   podium.innerHTML = "";
   table.innerHTML = "";
 }
-
 function showLoader() { loader.classList.remove("hidden"); }
 function hideLoader() { loader.classList.add("hidden"); }
 
-
+loadSeries("f1");
