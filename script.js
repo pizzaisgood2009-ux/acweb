@@ -11,17 +11,23 @@ const sheets = {
 const dropdown = document.getElementById("trackSelect");
 const podium = document.getElementById("podium");
 const table = document.getElementById("leaderboard");
+let currentSeries = "f1";
 
 document.querySelectorAll(".tab").forEach(tab => {
   tab.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
     tab.classList.add("active");
-    loadSeries(tab.dataset.series);
+    currentSeries = tab.dataset.series;
+    loadSeries(currentSeries);
   });
 });
 
 async function loadSeries(series) {
   try {
+    podium.innerHTML = "";
+    table.innerHTML = "";
+    dropdown.innerHTML = `<option>Loading...</option>`;
+
     const response = await fetch(sheets[series]);
     const text = await response.text();
     const data = Papa.parse(text, { header: true }).data.map(r => normalizeKeys(r));
@@ -37,8 +43,6 @@ async function loadSeries(series) {
     tracks.forEach(t => dropdown.innerHTML += `<option value="${t}">${t}</option>`);
 
     dropdown.onchange = () => showResults(series, data, trackColumn, dropdown.value);
-    podium.innerHTML = "";
-    table.innerHTML = "";
   } catch (err) {
     console.error(err);
     dropdown.innerHTML = `<option>Error loading sheet</option>`;
@@ -47,17 +51,13 @@ async function loadSeries(series) {
 
 function normalizeKeys(row) {
   const normalized = {};
-  for (const key in row) {
-    normalized[key.trim().toLowerCase()] = row[key];
-  }
+  for (const key in row) normalized[key.trim().toLowerCase()] = row[key];
   return normalized;
 }
 
-// 🔧 Smarter track column detection
 function findTrackColumn(data) {
   if (!data.length) return null;
   const keys = Object.keys(data[0]);
-  // find any column whose name contains the word "track"
   return keys.find(k => k.includes("track"));
 }
 
