@@ -1,39 +1,28 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Assetto Corsa Times</title>
-
-  <!-- PapaParse for reliable CSV fetch/parsing -->
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="mainContainer">
-    <header>
-      <h1 id="title">Assetto Corsa Times</h1>
-    </header>
-
-    <div id="tabsRow" class="tabs-row" role="tablist"></div>
-
-    <div class="controls">
-      <select id="trackPicker" aria-label="Select track">
-        <option value="">Select Track</option>
-      </select>
-      <button id="resetTrack" class="btn">Reset</button>
+  <div class="container">
+    <h1>Assetto Corsa Times</h1>
+    <div class="tabs">
+      <button class="tab active" data-series="f1">F1</button>
+      <button class="tab" data-series="imsaGT3">IMSA GT3</button>
+      <button class="tab" data-series="imsaLMP2">IMSA LMP2</button>
+      <button class="tab" data-series="indycar">NTT IndyCar</button>
+      <button class="tab" data-series="nascar">NASCAR Cup</button>
+      <button class="tab" data-series="superLateModel">Super Late Model</button>
+      <button class="tab" data-series="fun">Fun Races 🏁</button>
     </div>
 
-    <div id="dateDisplay" class="race-date" aria-live="polite"></div>
-
-    <section id="podiumContainer" class="podium" aria-live="polite"></section>
-
-    <section id="boardContainer" class="board">
-      <div class="placeholder">Select a track to view results</div>
-    </section>
+    <select id="trackSelect" class="dropdown"></select>
+    <div id="podium" class="podium"></div>
+    <table id="leaderboard" class="leaderboard"></table>
   </div>
-
   <script src="script.js"></script>
 </body>
 </html>
