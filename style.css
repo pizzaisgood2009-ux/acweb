@@ -4,46 +4,111 @@
 
 body {
   font-family: 'Poppins', sans-serif;
-  background-color: #0d0d0d;
+  background-color: #000;
   color: #f1f1f1;
   margin: 0;
   text-align: center;
 }
 
 header {
-  background: #1a1a1a;
+  background: #111;
   padding: 15px;
-  border-bottom: 2px solid #fb8500;
+  border-bottom: 2px solid #fb0000;
 }
 
 h1 {
-  color: #fb8500;
-  margin-bottom: 10px;
+  color: #fb0000;
+  font-size: 28px;
+  margin: 10px 0;
+}
+
+nav {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 nav button {
-  background: none;
-  border: none;
-  color: #f1f1f1;
-  font-size: 16px;
-  margin: 5px 10px;
-  padding: 8px 12px;
+  background: #111;
+  border: 2px solid transparent;
+  color: #fff;
+  font-size: 15px;
+  margin: 5px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
   transition: all 0.3s ease;
+}
+
+nav button img {
+  height: 20px;
 }
 
 nav button:hover,
 nav button.active {
-  border-bottom: 2px solid #fb8500;
-  color: #fb8500;
+  border: 2px solid #fb0000;
+  color: #fb0000;
+}
+
+#podium {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  margin-top: 25px;
+  gap: 15px;
+}
+
+.podium-spot {
+  background: #111;
+  border: 2px solid #fb0000;
+  border-radius: 10px;
+  padding: 10px;
+  width: 100px;
+  color: #fff;
+  transition: 0.3s;
+}
+
+.podium-spot h3 {
+  margin: 8px 0;
+  font-size: 16px;
+}
+
+.podium-spot p {
+  margin: 0;
+  font-weight: bold;
+  color: #fb0000;
+}
+
+.first {
+  height: 140px;
+  background: #1a1a1a;
+}
+
+.second {
+  height: 110px;
+  background: #161616;
+}
+
+.third {
+  height: 95px;
+  background: #161616;
+}
+
+#leaderboard {
+  margin-top: 40px;
+  width: 95%;
+  margin-inline: auto;
 }
 
 table {
   margin: 20px auto;
   border-collapse: collapse;
-  width: 90%;
-  background: #1a1a1a;
+  width: 100%;
+  background: #111;
   border-radius: 10px;
   overflow: hidden;
 }
@@ -55,12 +120,13 @@ th, td {
 }
 
 th {
-  background: #fb8500;
+  background: #fb0000;
   color: #000;
+  text-transform: uppercase;
 }
 
 footer {
-  margin-top: 30px;
-  color: #999;
+  margin-top: 40px;
+  color: #777;
   font-size: 14px;
 }
