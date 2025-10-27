@@ -9,14 +9,15 @@ const sheets = {
 };
 
 const buttons = document.querySelectorAll("#series-tabs button");
+const dropdown = document.getElementById("track-dropdown");
 const title = document.getElementById("series-title");
 const tableHead = document.querySelector("#data-table thead");
 const tableBody = document.querySelector("#data-table tbody");
-
-// podium
 const first = document.getElementById("first-name");
 const second = document.getElementById("second-name");
 const third = document.getElementById("third-name");
+
+let currentData = [];
 
 buttons.forEach(button => {
   button.addEventListener("click", () => {
@@ -33,21 +34,48 @@ function loadSheet(url) {
     .then(res => res.text())
     .then(csv => {
       const rows = csv.trim().split("\n").map(r => r.split(","));
+      currentData = rows;
+      populateDropdown(rows);
       renderTable(rows);
-      renderPodium(rows);
-    })
-    .catch(err => {
-      console.error("Error loading CSV:", err);
-      tableHead.innerHTML = "<tr><th>Error loading data</th></tr>";
-      tableBody.innerHTML = "";
     });
+}
+
+function populateDropdown(rows) {
+  dropdown.innerHTML = '<option value="">-- Choose a track --</option>';
+  const trackIndex = rows[0].findIndex(h => h.toLowerCase() === "track");
+  const tracks = [...new Set(rows.slice(1).map(r => r[trackIndex]).filter(Boolean))];
+  tracks.forEach(track => {
+    const opt = document.createElement("option");
+    opt.value = track;
+    opt.textContent = track;
+    dropdown.appendChild(opt);
+  });
+}
+
+dropdown.addEventListener("change", () => {
+  const val = dropdown.value;
+  if (!val) return;
+  updatePodium(val);
+});
+
+function updatePodium(trackName) {
+  const header = currentData[0].map(h => h.toLowerCase());
+  const trackIndex = header.indexOf("track");
+  const trackRow = currentData.find(r => r[trackIndex] === trackName);
+  if (!trackRow) return;
+
+  const winIdx = header.findIndex(h => h.includes("winner"));
+  const secondIdx = header.findIndex(h => h.includes("2nd"));
+  const thirdIdx = header.findIndex(h => h.includes("3rd"));
+
+  first.textContent = trackRow[winIdx] || "";
+  second.textContent = trackRow[secondIdx] || "";
+  third.textContent = trackRow[thirdIdx] || "";
 }
 
 function renderTable(rows) {
   tableHead.innerHTML = "";
   tableBody.innerHTML = "";
-
-  if (rows.length === 0) return;
 
   const headers = rows[0];
   const headerRow = document.createElement("tr");
@@ -67,27 +95,4 @@ function renderTable(rows) {
     });
     tableBody.appendChild(tr);
   });
-}
-
-function renderPodium(rows) {
-  // reset podium
-  first.textContent = "";
-  second.textContent = "";
-  third.textContent = "";
-
-  if (rows.length < 4) return;
-
-  // find columns that likely have podium data
-  const headerRow = rows[0].map(h => h.toLowerCase());
-  const winnerIndex = headerRow.findIndex(h => h.includes("winner"));
-  const secondIndex = headerRow.findIndex(h => h.includes("2nd"));
-  const thirdIndex = headerRow.findIndex(h => h.includes("3rd"));
-
-  if (winnerIndex === -1) return;
-
-  // use the latest track (first data row)
-  const latest = rows[1];
-  first.textContent = latest[winnerIndex] || "";
-  second.textContent = latest[secondIndex] || "";
-  third.textContent = latest[thirdIndex] || "";
 }
