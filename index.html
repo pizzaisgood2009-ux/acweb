@@ -3,24 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Apex Times Leaderboards</title>
+  <title> Asseto Corsa RNT times </title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header>
-    <h1>Apex Times Leaderboards</h1>
+    <h1>Apex Times</h1>
     <nav id="series-tabs">
-      <button data-series="fun">Fun Races</button>
-      <button data-series="f1">F1</button>
-      <button data-series="slm">Super Late Model</button>
-      <button data-series="lmp2">LMP2</button>
-      <button data-series="gt3">GT3</button>
-      <button data-series="indycar">IndyCar</button>
-      <button data-series="nascar">NASCAR</button>
+      <button data-series="fun"><img src="fun.png" alt=""> Fun</button>
+      <button data-series="f1"><img src="f1.png" alt=""> F1</button>
+      <button data-series="slm"><img src="slm.png" alt=""> SLM</button>
+      <button data-series="lmp2"><img src="lmp2.png" alt=""> LMP2</button>
+      <button data-series="gt3"><img src="gt3.png" alt=""> GT3</button>
+      <button data-series="indycar"><img src="indycar.png" alt=""> IndyCar</button>
+      <button data-series="nascar"><img src="nascar.png" alt=""> NASCAR</button>
     </nav>
   </header>
 
   <main>
+    <section id="podium">
+      <div class="podium-spot second"><h3 id="second-name"></h3><p>2nd</p></div>
+      <div class="podium-spot first"><h3 id="first-name"></h3><p>1st</p></div>
+      <div class="podium-spot third"><h3 id="third-name"></h3><p>3rd</p></div>
+    </section>
+
     <section id="leaderboard">
       <h2 id="series-title">Select a Series</h2>
       <table id="data-table">
@@ -30,9 +36,7 @@
     </section>
   </main>
 
-  <footer>
-    <p>© 2025 ApexTimes • Created by Gert</p>
-  </footer>
+
 
   <script src="script.js"></script>
 </body>
