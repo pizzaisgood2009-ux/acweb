@@ -1,4 +1,4 @@
-// --- Google Sheets sources (final working /gviz URLs) ---
+// --- Google Sheets sources (final working URLs) ---
 const sheets = {
   fun: "https://docs.google.com/spreadsheets/d/1vQ0L2HtZ0QC3ZlIpCwOrzGVQY0cOUDGaQj2DtBNQuqvLKwQ4sLfRmAcb5LG4H9Q3D1CFkilV5QdIwge/gviz/tq?tqx=out:csv",
   f1: "https://docs.google.com/spreadsheets/d/1vSSQ9Zn5aGGooGR9EuRmmMW-08_hlcYR7uB3_au3_tD94jialyB8c_olGXYpQvhf2nMnw7Yd-10IVDu/gviz/tq?tqx=out:csv",
@@ -32,13 +32,16 @@ async function loadSeries(series) {
   statusText.textContent = `Loading ${series.toUpperCase()} tracks...`;
 
   try {
-    // ✅ Use "&v=" not "?v=" to preserve the query string
-    const url = sheets[series] + "&v=" + Date.now();
-    const res = await fetch(url);
+    // ✅ Use AllOrigins proxy to bypass CORS and Google redirects
+    const proxiedUrl =
+      "https://api.allorigins.win/raw?url=" +
+      encodeURIComponent(sheets[series] + "&v=" + Date.now());
+
+    const res = await fetch(proxiedUrl);
     const raw = await res.text();
 
     // 🔍 Debug output
-    console.log("Fetching:", url);
+    console.log("Fetching:", proxiedUrl);
     console.log("Response sample:", raw.slice(0, 300));
 
     const clean = sliceFromRealHeader(raw);
@@ -67,7 +70,8 @@ async function loadSeries(series) {
       return;
     }
 
-    dropdown.innerHTML = `<option value="">Select Track</option>` +
+    dropdown.innerHTML =
+      `<option value="">Select Track</option>` +
       tracks.map(t => `<option value="${t}">${t}</option>`).join("");
 
     statusText.textContent = `${tracks.length} tracks available`;
@@ -86,7 +90,12 @@ function sliceFromRealHeader(text) {
   const lines = text.replace(/\r/g, "").split("\n");
   const idx = lines.findIndex(line => {
     const cells = line.split(",").map(c => cleanKey(c));
-    return cells.some(c => c.includes("track") || c.includes("race") || c.includes("circuit") || c.includes("venue"));
+    return cells.some(c =>
+      c.includes("track") ||
+      c.includes("race") ||
+      c.includes("circuit") ||
+      c.includes("venue")
+    );
   });
   return idx >= 0 ? lines.slice(idx).join("\n") : text;
 }
@@ -102,7 +111,8 @@ function cleanKey(s) {
 function normalizeKeys(row) {
   const out = {};
   for (const key in row) {
-    out[cleanKey(key)] = typeof row[key] === "string" ? row[key].trim() : row[key];
+    out[cleanKey(key)] =
+      typeof row[key] === "string" ? row[key].trim() : row[key];
   }
   return out;
 }
@@ -123,7 +133,9 @@ function showResults(series, data, trackCol, track) {
   if (!track) return;
   showLoader();
 
-  const rows = data.filter(r => (r[trackCol] || "").toLowerCase() === track.toLowerCase());
+  const rows = data.filter(
+    r => (r[trackCol] || "").toLowerCase() === track.toLowerCase()
+  );
   if (!rows.length) {
     table.innerHTML = `<tr><td colspan="2">No results yet for ${track}</td></tr>`;
     hideLoader();
@@ -132,11 +144,19 @@ function showResults(series, data, trackCol, track) {
 
   const race = rows[0];
 
-  // Fun Races - show full table
+  // Fun Races - full table
   if (series === "fun") {
     const headers = Object.keys(race);
-    table.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr>` +
-      data.map(r => `<tr>${headers.map(h => `<td>${r[h] || ""}</td>`).join("")}</tr>`).join("");
+    table.innerHTML =
+      `<tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr>` +
+      data
+        .map(
+          r =>
+            `<tr>${headers
+              .map(h => `<td>${r[h] || ""}</td>`)
+              .join("")}</tr>`
+        )
+        .join("");
     hideLoader();
     return;
   }
@@ -152,17 +172,26 @@ function showResults(series, data, trackCol, track) {
   `;
 
   const rest = Object.entries(race)
-    .filter(([k, v]) => k.includes("place") && !["2nd place", "3rd place"].includes(k) && v && v.trim() !== "")
+    .filter(
+      ([k, v]) =>
+        k.includes("place") &&
+        !["2nd place", "3rd place"].includes(k) &&
+        v &&
+        v.trim() !== ""
+    )
     .map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`)
     .join("");
 
-  if (rest) table.innerHTML = `<tr><th>Position</th><th>Driver</th></tr>${rest}`;
+  if (rest)
+    table.innerHTML = `<tr><th>Position</th><th>Driver</th></tr>${rest}`;
   hideLoader();
 }
 
 function pickFirst(row, groups) {
   for (const group of groups) {
-    const key = Object.keys(row).find(k => group.some(word => k.includes(word)));
+    const key = Object.keys(row).find(k =>
+      group.some(word => k.includes(word))
+    );
     if (key && row[key]) return row[key];
   }
   return "";
@@ -171,7 +200,8 @@ function pickFirst(row, groups) {
 function stageGlow(series, race, name) {
   if (!name) return "";
   if (["nascar", "slm"].includes(series)) {
-    const s1 = race["stage 1 winner"], s2 = race["stage 2 winner"];
+    const s1 = race["stage 1 winner"],
+      s2 = race["stage 2 winner"];
     if (s1 && s1.trim() === name.trim()) return "stage1";
     if (s2 && s2.trim() === name.trim()) return "stage2";
   }
@@ -179,10 +209,20 @@ function stageGlow(series, race, name) {
 }
 
 // --- UI Helpers ---
-function clearAll() { dropdown.innerHTML = ""; clearResults(); }
-function clearResults() { podium.innerHTML = ""; table.innerHTML = ""; }
-function showLoader() { loader && loader.classList.remove("hidden"); }
-function hideLoader() { loader && loader.classList.add("hidden"); }
+function clearAll() {
+  dropdown.innerHTML = "";
+  clearResults();
+}
+function clearResults() {
+  podium.innerHTML = "";
+  table.innerHTML = "";
+}
+function showLoader() {
+  loader && loader.classList.remove("hidden");
+}
+function hideLoader() {
+  loader && loader.classList.add("hidden");
+}
 
 // --- Load default series ---
 loadSeries("fun");
