@@ -10,12 +10,11 @@ const sheets = {
 
 const buttons = document.querySelectorAll("#series-tabs button");
 const dropdown = document.getElementById("track-dropdown");
-const title = document.getElementById("series-title");
-const tableHead = document.querySelector("#data-table thead");
-const tableBody = document.querySelector("#data-table tbody");
+const podium = document.getElementById("podium");
 const first = document.getElementById("first-name");
 const second = document.getElementById("second-name");
 const third = document.getElementById("third-name");
+const othersList = document.getElementById("others-list");
 
 let currentData = [];
 
@@ -24,7 +23,6 @@ buttons.forEach(button => {
     buttons.forEach(btn => btn.classList.remove("active"));
     button.classList.add("active");
     const series = button.dataset.series;
-    title.textContent = button.textContent + " Leaderboard";
     loadSheet(sheets[series]);
   });
 });
@@ -36,7 +34,8 @@ function loadSheet(url) {
       const rows = csv.trim().split("\n").map(r => r.split(","));
       currentData = rows;
       populateDropdown(rows);
-      renderTable(rows);
+      podium.classList.remove("show");
+      othersList.innerHTML = "";
     });
 }
 
@@ -64,35 +63,35 @@ function updatePodium(trackName) {
   const trackRow = currentData.find(r => r[trackIndex] === trackName);
   if (!trackRow) return;
 
-  const winIdx = header.findIndex(h => h.includes("winner"));
+  const winnerIdx = header.findIndex(h => h.includes("race winner") || h.includes("winner"));
   const secondIdx = header.findIndex(h => h.includes("2nd"));
   const thirdIdx = header.findIndex(h => h.includes("3rd"));
 
-  first.textContent = trackRow[winIdx] || "";
-  second.textContent = trackRow[secondIdx] || "";
-  third.textContent = trackRow[thirdIdx] || "";
+  const p1 = trackRow[winnerIdx] || "";
+  const p2 = trackRow[secondIdx] || "";
+  const p3 = trackRow[thirdIdx] || "";
+
+  first.textContent = p1;
+  second.textContent = p2;
+  third.textContent = p3;
+
+  // Fade animation
+  podium.classList.remove("show");
+  setTimeout(() => podium.classList.add("show"), 100);
+
+  renderOthers(trackRow, [winnerIdx, secondIdx, thirdIdx]);
 }
 
-function renderTable(rows) {
-  tableHead.innerHTML = "";
-  tableBody.innerHTML = "";
-
-  const headers = rows[0];
-  const headerRow = document.createElement("tr");
-  headers.forEach(h => {
-    const th = document.createElement("th");
-    th.textContent = h;
-    headerRow.appendChild(th);
-  });
-  tableHead.appendChild(headerRow);
-
-  rows.slice(1).forEach(row => {
-    const tr = document.createElement("tr");
-    row.forEach(cell => {
-      const td = document.createElement("td");
-      td.textContent = cell;
-      tr.appendChild(td);
-    });
-    tableBody.appendChild(tr);
-  });
+function renderOthers(trackRow, topIndexes) {
+  othersList.innerHTML = "";
+  const header = currentData[0];
+  for (let i = 0; i < header.length; i++) {
+    if (i === 0 || topIndexes.includes(i)) continue;
+    const title = header[i];
+    const name = trackRow[i];
+    if (!name || name.trim() === "") continue;
+    const li = document.createElement("li");
+    li.textContent = `${title}: ${name}`;
+    othersList.appendChild(li);
+  }
 }
