@@ -1,4 +1,3 @@
-// --- Google Sheets sources ---
 const sheets = {
   fun: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0L2HtZ0QC3ZlIpCwOrzGVQY0cOUDGaQj2DtBNQuqvLKwQ4sLfRmAcb5LG4H9Q3D1CFkilV5QdIwge/pub?output=csv",
   f1: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSSQ9Zn5aGGooGR9EuRmmMW-08_hlcYR7uB3_au3_tD94jialyB8c_olGXYpQvhf2nMnw7Yd-10IVDu/pub?output=csv",
@@ -9,34 +8,33 @@ const sheets = {
   nascar: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSH5c-BTz-ZfoJ3Rf58Q4eU9VBvsdq0XnsA99_qJM2Bvdqaq6Ex033d5gH57SQdcOm6haTNL3xi2Koh/pub?output=csv"
 };
 
-// DOM Elements
 const buttons = document.querySelectorAll("#series-tabs button");
 const title = document.getElementById("series-title");
 const tableHead = document.querySelector("#data-table thead");
 const tableBody = document.querySelector("#data-table tbody");
 
-// Add click listeners to all buttons
+// podium
+const first = document.getElementById("first-name");
+const second = document.getElementById("second-name");
+const third = document.getElementById("third-name");
+
 buttons.forEach(button => {
   button.addEventListener("click", () => {
     buttons.forEach(btn => btn.classList.remove("active"));
     button.classList.add("active");
-
     const series = button.dataset.series;
     title.textContent = button.textContent + " Leaderboard";
     loadSheet(sheets[series]);
   });
 });
 
-// Function to fetch CSV and render table
 function loadSheet(url) {
   fetch(url)
-    .then(res => {
-      if (!res.ok) throw new Error("Network response was not ok");
-      return res.text();
-    })
+    .then(res => res.text())
     .then(csv => {
       const rows = csv.trim().split("\n").map(r => r.split(","));
       renderTable(rows);
+      renderPodium(rows);
     })
     .catch(err => {
       console.error("Error loading CSV:", err);
@@ -45,17 +43,12 @@ function loadSheet(url) {
     });
 }
 
-// Render table from 2D array
 function renderTable(rows) {
   tableHead.innerHTML = "";
   tableBody.innerHTML = "";
 
-  if (rows.length === 0) {
-    tableHead.innerHTML = "<tr><th>No data found</th></tr>";
-    return;
-  }
+  if (rows.length === 0) return;
 
-  // Header
   const headers = rows[0];
   const headerRow = document.createElement("tr");
   headers.forEach(h => {
@@ -65,7 +58,6 @@ function renderTable(rows) {
   });
   tableHead.appendChild(headerRow);
 
-  // Body
   rows.slice(1).forEach(row => {
     const tr = document.createElement("tr");
     row.forEach(cell => {
@@ -75,4 +67,27 @@ function renderTable(rows) {
     });
     tableBody.appendChild(tr);
   });
+}
+
+function renderPodium(rows) {
+  // reset podium
+  first.textContent = "";
+  second.textContent = "";
+  third.textContent = "";
+
+  if (rows.length < 4) return;
+
+  // find columns that likely have podium data
+  const headerRow = rows[0].map(h => h.toLowerCase());
+  const winnerIndex = headerRow.findIndex(h => h.includes("winner"));
+  const secondIndex = headerRow.findIndex(h => h.includes("2nd"));
+  const thirdIndex = headerRow.findIndex(h => h.includes("3rd"));
+
+  if (winnerIndex === -1) return;
+
+  // use the latest track (first data row)
+  const latest = rows[1];
+  first.textContent = latest[winnerIndex] || "";
+  second.textContent = latest[secondIndex] || "";
+  third.textContent = latest[thirdIndex] || "";
 }
