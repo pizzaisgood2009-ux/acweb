@@ -1,3 +1,4 @@
+// --- Google Sheets sources (final working /gviz URLs) ---
 const sheets = {
   fun: "https://docs.google.com/spreadsheets/d/1vQ0L2HtZ0QC3ZlIpCwOrzGVQY0cOUDGaQj2DtBNQuqvLKwQ4sLfRmAcb5LG4H9Q3D1CFkilV5QdIwge/gviz/tq?tqx=out:csv",
   f1: "https://docs.google.com/spreadsheets/d/1vSSQ9Zn5aGGooGR9EuRmmMW-08_hlcYR7uB3_au3_tD94jialyB8c_olGXYpQvhf2nMnw7Yd-10IVDu/gviz/tq?tqx=out:csv",
@@ -7,7 +8,6 @@ const sheets = {
   nascar: "https://docs.google.com/spreadsheets/d/1vSH5c-BTz-ZfoJ3Rf58Q4eU9VBvsdq0XnsA99_qJM2Bvdqaq6Ex033d5gH57SQdcOm6haTNL3xi2Koh/gviz/tq?tqx=out:csv",
   slm: "https://docs.google.com/spreadsheets/d/1vTVDfTXz8FwR6oL03HzFcOwZWJf1V8srF_FHSoXZbBevqS8tV9RFFBNTaHSm4-66ViUwJ8UCkrWVCgn/gviz/tq?tqx=out:csv",
 };
-
 
 // --- UI elements ---
 const dropdown = document.getElementById("trackSelect");
@@ -32,11 +32,12 @@ async function loadSeries(series) {
   statusText.textContent = `Loading ${series.toUpperCase()} tracks...`;
 
   try {
-    const url = sheets[series] + "?v=" + Date.now();
+    // ✅ Use "&v=" not "?v=" to preserve the query string
+    const url = sheets[series] + "&v=" + Date.now();
     const res = await fetch(url);
     const raw = await res.text();
 
-    // 🔍 Debugging
+    // 🔍 Debug output
     console.log("Fetching:", url);
     console.log("Response sample:", raw.slice(0, 300));
 
@@ -72,7 +73,7 @@ async function loadSeries(series) {
     statusText.textContent = `${tracks.length} tracks available`;
     dropdown.onchange = () => showResults(series, data, trackCol, dropdown.value);
   } catch (err) {
-    console.error(err);
+    console.error("Error loading sheet:", err);
     dropdown.innerHTML = `<option>Error loading</option>`;
     statusText.textContent = `Error loading ${series}`;
   } finally {
@@ -131,7 +132,7 @@ function showResults(series, data, trackCol, track) {
 
   const race = rows[0];
 
-  // Fun Races - full table
+  // Fun Races - show full table
   if (series === "fun") {
     const headers = Object.keys(race);
     table.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr>` +
