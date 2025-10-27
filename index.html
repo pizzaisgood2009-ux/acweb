@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Asseto Corsa Times</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apex Times Leaderboards</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
@@ -28,21 +28,21 @@
       </select>
     </section>
 
-    <section id="podium">
+    <section id="podium" class="fade">
       <div class="podium-spot second"><h3 id="second-name"></h3><p>2nd</p></div>
       <div class="podium-spot first"><h3 id="first-name"></h3><p>1st</p></div>
       <div class="podium-spot third"><h3 id="third-name"></h3><p>3rd</p></div>
     </section>
 
-    <section id="leaderboard">
-      <h2 id="series-title">Select a Series</h2>
-      <table id="data-table">
-        <thead></thead>
-        <tbody></tbody>
-      </table>
+    <section id="others">
+      <h2>Rest of Field</h2>
+      <ul id="others-list"></ul>
     </section>
   </main>
 
+  <footer>
+    <p>© 2025 ApexTimes • Built by Gert</p>
+  </footer>
 
   <script src="script.js"></script>
 </body>
