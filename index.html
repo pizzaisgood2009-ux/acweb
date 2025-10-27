@@ -1,42 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Assetto Corsa Times</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apex Times Leaderboards</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <h1>Assetto Corsa Times</h1>
+  <header>
+    <h1>Apex Times Leaderboards</h1>
+    <nav id="series-tabs">
+      <button data-series="fun">Fun Races</button>
+      <button data-series="f1">F1</button>
+      <button data-series="slm">Super Late Model</button>
+      <button data-series="lmp2">LMP2</button>
+      <button data-series="gt3">GT3</button>
+      <button data-series="indycar">IndyCar</button>
+      <button data-series="nascar">NASCAR</button>
+    </nav>
+  </header>
 
-    <!-- 🔴 TABS -->
-    <div class="tabs">
-      <button class="tab active" data-series="fun">🏁 Fun Races</button>
-      <button class="tab" data-series="f1"><img src="img/f1.png" alt="">F1</button>
-      <button class="tab" data-series="indycar"><img src="img/indycar.png" alt="">IndyCar</button>
-      <button class="tab" data-series="imsaGT3"><img src="img/imsa_gt3.png" alt="">IMSA GT3</button>
-      <button class="tab" data-series="imsaLMP2"><img src="img/imsa_lmp2.png" alt="">IMSA LMP2</button>
-      <button class="tab" data-series="nascar"><img src="img/nascar.png" alt="">NASCAR Cup</button>
-      <button class="tab" data-series="slm"><img src="img/slm.png" alt="">Super Late Model</button>
-    </div>
+  <main>
+    <section id="leaderboard">
+      <h2 id="series-title">Select a Series</h2>
+      <table id="data-table">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
 
-    <!-- 🔽 TRACK DROPDOWN -->
-    <select id="trackSelect"></select>
-
-    <!-- 🟥 STATUS TEXT (loading + track count) -->
-    <p id="trackStatus" style="color:#ff1e1e; font-size:14px; margin-top:-10px;"></p>
-
-    <!-- 🌀 LOADER -->
-    <div id="loader" class="loader hidden"></div>
-
-    <!-- 🏆 PODIUM -->
-    <div id="podium"></div>
-
-    <!-- 📊 LEADERBOARD -->
-    <table id="leaderboard"></table>
-  </div>
+  <footer>
+    <p>© 2025 ApexTimes • Created by Gert</p>
+  </footer>
 
   <script src="script.js"></script>
 </body>
