@@ -1,11 +1,7 @@
-* {
-  box-sizing: border-box;
-}
-
 body {
   font-family: 'Poppins', sans-serif;
   background-color: #000;
-  color: #f1f1f1;
+  color: #fff;
   margin: 0;
   text-align: center;
 }
@@ -18,15 +14,14 @@ header {
 
 h1 {
   color: #fb0000;
-  font-size: 28px;
-  margin: 10px 0;
+  margin: 0 0 10px;
 }
 
 nav {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
 nav button {
@@ -34,7 +29,6 @@ nav button {
   border: 2px solid transparent;
   color: #fff;
   font-size: 15px;
-  margin: 5px;
   padding: 8px 14px;
   border-radius: 8px;
   display: flex;
@@ -54,6 +48,19 @@ nav button.active {
   color: #fb0000;
 }
 
+#track-select {
+  margin-top: 20px;
+}
+
+select {
+  padding: 6px 10px;
+  border: 2px solid #fb0000;
+  border-radius: 6px;
+  background: #111;
+  color: #fff;
+  font-size: 14px;
+}
+
 #podium {
   display: flex;
   justify-content: center;
@@ -69,34 +76,11 @@ nav button.active {
   padding: 10px;
   width: 100px;
   color: #fff;
-  transition: 0.3s;
 }
 
-.podium-spot h3 {
-  margin: 8px 0;
-  font-size: 16px;
-}
-
-.podium-spot p {
-  margin: 0;
-  font-weight: bold;
-  color: #fb0000;
-}
-
-.first {
-  height: 140px;
-  background: #1a1a1a;
-}
-
-.second {
-  height: 110px;
-  background: #161616;
-}
-
-.third {
-  height: 95px;
-  background: #161616;
-}
+.first { background: gold; color: #000; height: 140px; }
+.second { background: silver; color: #000; height: 110px; }
+.third { background: #cd7f32; color: #000; height: 95px; }
 
 #leaderboard {
   margin-top: 40px;
@@ -122,7 +106,6 @@ th, td {
 th {
   background: #fb0000;
   color: #000;
-  text-transform: uppercase;
 }
 
 footer {
