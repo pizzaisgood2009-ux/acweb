@@ -1,3 +1,4 @@
+// --- Google Sheets sources ---
 const sheets = {
   fun: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0L2HtZ0QC3ZlIpCwOrzGVQY0cOUDGaQj2DtBNQuqvLKwQ4sLfRmAcb5LG4H9Q3D1CFkilV5QdIwge/pub?output=csv",
   f1: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSSQ9Zn5aGGooGR9EuRmmMW-08_hlcYR7uB3_au3_tD94jialyB8c_olGXYpQvhf2nMnw7Yd-10IVDu/pub?output=csv",
@@ -8,12 +9,14 @@ const sheets = {
   slm: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVDfTXz8FwR6oL03HzFcOwZWJf1V8srF_FHSoXZbBevqS8tV9RFFBNTaHSm4-66ViUwJ8UCkrWVCgn/pub?output=csv",
 };
 
+// --- UI elements ---
 const dropdown = document.getElementById("trackSelect");
 const podium = document.getElementById("podium");
 const table = document.getElementById("leaderboard");
 const loader = document.getElementById("loader");
 const statusText = document.getElementById("trackStatus");
 
+// --- Tab switching ---
 document.querySelectorAll(".tab").forEach(tab => {
   tab.addEventListener("click", async () => {
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
@@ -22,6 +25,7 @@ document.querySelectorAll(".tab").forEach(tab => {
   });
 });
 
+// --- Main loader ---
 async function loadSeries(series) {
   showLoader();
   clearAll();
@@ -31,6 +35,11 @@ async function loadSeries(series) {
     const url = sheets[series] + "?v=" + Date.now();
     const res = await fetch(url);
     const raw = await res.text();
+
+    // 🔍 Debugging
+    console.log("Fetching:", url);
+    console.log("Response sample:", raw.slice(0, 300));
+
     const clean = sliceFromRealHeader(raw);
 
     const data = Papa.parse(clean, {
@@ -72,7 +81,6 @@ async function loadSeries(series) {
 }
 
 // --- Utilities ---
-
 function sliceFromRealHeader(text) {
   const lines = text.replace(/\r/g, "").split("\n");
   const idx = lines.findIndex(line => {
@@ -92,7 +100,9 @@ function cleanKey(s) {
 
 function normalizeKeys(row) {
   const out = {};
-  for (const key in row) out[cleanKey(key)] = typeof row[key] === "string" ? row[key].trim() : row[key];
+  for (const key in row) {
+    out[cleanKey(key)] = typeof row[key] === "string" ? row[key].trim() : row[key];
+  }
   return out;
 }
 
@@ -107,7 +117,6 @@ function findColumn(data, keywords) {
 }
 
 // --- Display logic ---
-
 function showResults(series, data, trackCol, track) {
   clearResults();
   if (!track) return;
@@ -169,10 +178,10 @@ function stageGlow(series, race, name) {
 }
 
 // --- UI Helpers ---
-
 function clearAll() { dropdown.innerHTML = ""; clearResults(); }
 function clearResults() { podium.innerHTML = ""; table.innerHTML = ""; }
 function showLoader() { loader && loader.classList.remove("hidden"); }
 function hideLoader() { loader && loader.classList.add("hidden"); }
 
+// --- Load default series ---
 loadSeries("fun");
