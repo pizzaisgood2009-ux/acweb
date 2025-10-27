@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title> Asseto Corsa RNT times </title>
+  <title>Asseto Corsa Times</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -21,6 +21,13 @@
   </header>
 
   <main>
+    <section id="track-select">
+      <label for="track-dropdown">Select Track:</label>
+      <select id="track-dropdown">
+        <option value="">-- Choose a track --</option>
+      </select>
+    </section>
+
     <section id="podium">
       <div class="podium-spot second"><h3 id="second-name"></h3><p>2nd</p></div>
       <div class="podium-spot first"><h3 id="first-name"></h3><p>1st</p></div>
@@ -35,7 +42,6 @@
       </table>
     </section>
   </main>
-
 
 
   <script src="script.js"></script>
